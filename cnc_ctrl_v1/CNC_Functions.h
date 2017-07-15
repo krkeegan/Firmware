@@ -38,24 +38,23 @@ bool zAxisAttached = false;
 #define INCHES      25.4
 #define MAXFEED     900      //The maximum allowable feedrate in mm/min
 
+#define ENCODER1A 18
+#define ENCODER1B 19
+#define ENCODER2A 2
+#define ENCODER2B 3
+#define ENCODER3A 21
+#define ENCODER3B 20
 
-int ENCODER1A;
-int ENCODER1B;
-int ENCODER2A;
-int ENCODER2B;
-int ENCODER3A;
-int ENCODER3B;
-
-int IN1;
-int IN2;
-int IN3;
-int IN4;
-int IN5;
-int IN6;
-
-int ENA;
-int ENB;
-int ENC;
+#define IN1 9
+#define IN2 8
+#define IN3 11
+#define IN4 10
+#define IN5 12
+#define IN6 13
+ 		 
+#define ENA 6
+#define ENB 7
+#define ENC 5
 
 #define DISTPERROT     10*6.35//#teeth*pitch of chain
 #define ZDISTPERROT    3.17//1/8inch in mm
@@ -73,11 +72,11 @@ int pcbRevisionIndicator = digitalRead(22);
 int   setupPins(){
     /*
     
-    Detect the version of the Arduino shield connected, and use the aproprate pins
+    Detect the version of the Arduino shield connected, and use the appropriate pins
     
     */
     
-    if(pcbRevisionIndicator == 1){
+    /*if(pcbRevisionIndicator == 1){
         //Beta PCB v1.0 Detected
         ENCODER1A = 18;
         ENCODER1B = 19;
@@ -120,7 +119,7 @@ int   setupPins(){
         ENC = 12;
         
         return 0;
-    }
+    }*/
 }
 
 int pinsSetup       = setupPins();
