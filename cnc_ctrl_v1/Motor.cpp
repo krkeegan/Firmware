@@ -32,7 +32,7 @@ Motor::Motor(){
   
 }
 
-int  Motor::setupMotor(int pwmPin, int pin1, int pin2){
+void  Motor::setupMotor(int pwmPin, int pin1, int pin2){
   
   //store pin numbers as private variables
   _pwmPin = pwmPin;
@@ -50,7 +50,7 @@ int  Motor::setupMotor(int pwmPin, int pin1, int pin2){
   digitalWrite(_pin2,    LOW) ;
   digitalWrite(_pwmPin,  LOW);
   
-  return 1;
+  return;
 }
 
 void Motor::attach(){
@@ -140,25 +140,6 @@ void Motor::directWrite(int voltage){
 int  Motor::attached(){
     
     return _attachedState;
-}
-
-int  Motor::_convolve(int input){
-    /*
-    This function distorts the input signal in a manner which is the inverse of the way
-    the mechanics of the motor distort it to give a linear response.
-    */
-    
-    int output = input;
-    
-    int arrayLen = sizeof(_linSegments)/sizeof(_linSegments[1]);
-    for (int i = 0; i <= arrayLen - 1; i++){
-        if (input > _linSegments[i].negativeBound and input < _linSegments[i].positiveBound){
-            output = (input + _linSegments[i].intercept)/_linSegments[i].slope;
-            break;
-        }
-    }
-    
-    return output;
 }
 
 void Motor::setSegment(int index, float slope, float intercept, int negativeBound, int positiveBound){

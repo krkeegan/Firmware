@@ -35,7 +35,7 @@
         public:
             Motor();
             void attach();
-            int  setupMotor(int pwmPin, int pin1, int pin2);
+            void setupMotor(int pwmPin, int pin1, int pin2);
             void detach();
             void write(int speed);
             int  attached();

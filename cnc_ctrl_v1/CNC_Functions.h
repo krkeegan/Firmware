@@ -332,7 +332,7 @@ float computeStepSize(float MMPerMin){
     return .0001575*MMPerMin; //value found empirically by running loop until there were not spare cycles
 }
 
-int   cordinatedMove(float xEnd, float yEnd, float MMPerMin){
+void   cordinatedMove(float xEnd, float yEnd, float MMPerMin){
     
 /*The move() function moves the tool in a straight line to the position (xEnd, yEnd) at 
 the speed moveSpeed. Movements are correlated so that regardless of the distances moved in each 
@@ -420,7 +420,7 @@ and G01 commands. The units at this point should all be in mm or mm per minute*/
     xTarget = xEnd;
     yTarget = yEnd;
     
-    return 1;
+    return;
     
 }
 
@@ -521,7 +521,7 @@ If no number is found, defaultReturn is returned*/
     return numberAsFloat;
 }
 
-int   G1(String& readString){
+void  G1(String& readString){
     
 /*G1() is the function which is called to process the string if it begins with 
 'G01' or 'G00'*/
@@ -605,7 +605,7 @@ int   G1(String& readString){
     }
 }
 
-int   arc(float X1, float Y1, float X2, float Y2, float centerX, float centerY, float MMPerMin, float direction){
+void   arc(float X1, float Y1, float X2, float Y2, float centerX, float centerY, float MMPerMin, float direction){
     /*
     
     Move the machine through an arc from point (X1, Y1) to point (X2, Y2) along the 
@@ -711,7 +711,7 @@ int   arc(float X1, float Y1, float X2, float Y2, float centerX, float centerY, 
     return 1;
 }
 
-int   G2(String& readString,int G2orG3){
+void   G2(String& readString,int G2orG3){
     /*
     
     The G2 function handles the processing of the gcode line for both the command G2 and the
