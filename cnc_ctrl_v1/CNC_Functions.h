@@ -38,23 +38,23 @@ bool zAxisAttached = false;
 #define INCHES      25.4
 #define MAXFEED     900      //The maximum allowable feedrate in mm/min
 
-#define ENCODER1A 18
-#define ENCODER1B 19
-#define ENCODER2A 2
-#define ENCODER2B 3
-#define ENCODER3A 21
-#define ENCODER3B 20
+#define ENCODER1A 20
+#define ENCODER1B 21
+#define ENCODER2A 19
+#define ENCODER2B 18
+#define ENCODER3A 2
+#define ENCODER3B 3
 
-#define IN1 9
-#define IN2 8
-#define IN3 11
-#define IN4 10
-#define IN5 12
-#define IN6 13
+#define IN1 6
+#define IN2 4
+#define IN3 9
+#define IN4 7
+#define IN5 10
+#define IN6 11
  		 
-#define ENA 6
-#define ENB 7
-#define ENC 5
+#define ENA 5
+#define ENB 8
+#define ENC 12
 
 #define DISTPERROT     10*6.35//#teeth*pitch of chain
 #define ZDISTPERROT    3.17//1/8inch in mm
@@ -124,8 +124,8 @@ int   setupPins(){
 
 int pinsSetup       = setupPins();
 
-Axis leftAxis (ENC, IN6, IN5, ENCODER3B, ENCODER3A, "Left-axis",   LEFT_EEPROM_ADR, DISTPERROT, ENCODERSTEPS);
 Axis rightAxis(ENA, IN1, IN2, ENCODER1A, ENCODER1B, "Right-axis", RIGHT_EEPROM_ADR, DISTPERROT, ENCODERSTEPS);
+Axis leftAxis (ENC, IN6, IN5, ENCODER3B, ENCODER3A, "Left-axis",   LEFT_EEPROM_ADR, DISTPERROT, ENCODERSTEPS);
 Axis zAxis    (ENB, IN3, IN4, ENCODER2B, ENCODER2A, "Z-Axis",         Z_EEPROM_ADR, ZDISTPERROT, ZENCODERSTEPS);
 
 
