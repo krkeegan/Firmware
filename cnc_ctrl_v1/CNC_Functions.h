@@ -38,6 +38,9 @@ bool zAxisAttached = false;
 #define INCHES      25.4
 #define MAXFEED     900      //The maximum allowable feedrate in mm/min
 #define MAXZROTMIN  12.60    // the maximum z rotations per minute
+#define HALTTOLERANCE  1     // the minimum error distance in mm that must be
+                             // by the other two axes before doing a single axis
+                             // move
 
 
 int ENCODER1A;
@@ -446,6 +449,21 @@ void  singleAxisMove(Axis* axis, const float& endPos, const float& MMPerMin){
     long numberOfStepsTaken    = 0;
     long  beginingOfLastStep   = millis();
     
+    //disable other axes
+    Axis* axes[] = {leftAxis, rightAxis, zAxis};
+    int i;
+    for (i = 0; i < sizeof(axes) - 1; i = i + 1) {
+      if (axes[i] == axis) {
+          continue;
+      }
+      while (axes[i]->error() > HALTTOLERANCE) {
+        // careful this can loop forever! need some timeout
+        // maybe check how long ago this axis was asked to move
+          delay(5);
+      }
+      axes[i]->detach();
+    }
+
     //attach the axis we want to move
     axis->attach();
     
