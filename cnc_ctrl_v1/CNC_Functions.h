@@ -149,6 +149,8 @@ int   lastCommand           =  0;         //Stores the value of the last command
 float xTarget = 0;
 float yTarget = 0;
 
+int G17thru19 = 17;  //Coordinate plane tracking
+
 void  returnError(){
     /*
     Prints the machine's positional error and the amount of space available in the 
@@ -757,11 +759,16 @@ int   G2(const String& readString, int G2orG3){
     
     float X1 = xTarget; //does this work if units are inches? (It seems to)
     float Y1 = yTarget;
+    float Z1 = zaxis.read();
     
     float X2      = _inchesToMMConversion*extractGcodeValue(readString, 'X', X1/_inchesToMMConversion);
     float Y2      = _inchesToMMConversion*extractGcodeValue(readString, 'Y', Y1/_inchesToMMConversion);
+    float Z2      = _inchesToMMConversion*extractGcodeValue(readString, 'Z', Z1/_inchesToMMConversion);
     float I       = _inchesToMMConversion*extractGcodeValue(readString, 'I', 0.0);
     float J       = _inchesToMMConversion*extractGcodeValue(readString, 'J', 0.0);
+    float K       = _inchesToMMConversion*extractGcodeValue(readString, 'K', 0.0);
+    float P       = _inchesToMMConversion*extractGcodeValue(readString, 'P', 0.0);
+    float R       = _inchesToMMConversion*extractGcodeValue(readString, 'R', 0.0);
     feedrate      = _inchesToMMConversion*extractGcodeValue(readString, 'F', feedrate/_inchesToMMConversion);
     
     float centerX = X1 + I;
@@ -1186,6 +1193,15 @@ void  executeGcodeLine(const String& gcodeLine){
             break;
         case 10:
             G10(gcodeLine);
+            break;
+        case 17:
+            G17thru19 = 17;
+            break;
+        case 18:
+            G17thru19 = 18;
+            break;
+        case 19:
+            G17thru19 = 19;
             break;
         case 20:
             setInchesToMillimetersConversion(INCHES);
