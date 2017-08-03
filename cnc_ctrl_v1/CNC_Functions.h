@@ -461,6 +461,57 @@ and G01 commands. The units at this point should all be in mm or mm per minute*/
     
 }
 
+int   fastCordinatedMove(const float& xEnd, const float& yEnd, const float& zEnd, float MMPerMin){
+    
+    /*This moves the tool to the specified end point as fast as possible without
+    any concern for how straight the line is.  As the tool gets close to the
+    final destination, cordinatedMove is called to move the last little bit at
+    the specified feedrate.  This should never be used for cutting, but instead
+    used for the G0 or G00 rapid move*/
+
+    //attach the axes
+    leftAxis.attach();
+    rightAxis.attach();
+    if(zAxisAttached){
+      zAxis.attach();
+    }
+    
+    //move tool
+    float aChainLength;
+    float bChainLength;
+    kinematics.inverse(xEnd,yEnd, &aChainLength,&bChainLength);
+    leftAxis.write(aChainLength);
+    rightAxis.write(bChainLength);
+    if(zAxisAttached){
+      zAxis.write(zEnd);
+    }
+    
+    while(leftAxis.error() > 10 || rightAxis.error() > 10 || zAxis.error() > .1){    
+        //update position on display
+        kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
+        returnPoz(xTarget, yTarget, zAxis.read());
+        
+        //check for new serial commands
+        readSerialCommands();
+        
+        //check for a STOP command
+        if(checkForStopCommand()){
+            
+            //set the axis positions to save
+            leftAxis.endMove(leftAxis.read());
+            rightAxis.endMove(rightAxis.read());
+            if(zAxisAttached){
+              zAxis.endMove(zAxis.read());
+            }
+          
+            return 1;
+        }
+        //delay(10);
+    }
+      
+    return cordinatedMove(xEnd, yEnd, zEnd, MMPerMin);
+}
+
 void  singleAxisMove(Axis* axis, const float& endPos, const float& MMPerMin){
     /*
     Takes a pointer to an axis object and moves that axis to endPos at speed MMPerMin
@@ -624,7 +675,7 @@ int   G1(const String& readString, int G0orG1){
     }
     else{
         //if this is a rapid move
-        cordinatedMove(xgoto, ygoto, zgoto, 1000); //move the same as a regular move, but go fast
+        fastCordinatedMove(xgoto, ygoto, zgoto, 1000); //move the same as a regular move, but go fast
     }
 }
 
