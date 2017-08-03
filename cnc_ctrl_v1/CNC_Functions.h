@@ -486,7 +486,7 @@ int   fastCordinatedMove(const float& xEnd, const float& yEnd, const float& zEnd
       zAxis.write(zEnd);
     }
     
-    while(leftAxis.error() > 10 || rightAxis.error() > 10 || zAxis.error() > .1){    
+    while(abs(leftAxis.error()) > 10 || abs(rightAxis.error()) > 10 || abs(zAxis.error()) > .1){    
         //update position on display
         kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
         returnPoz(xTarget, yTarget, zAxis.read());
