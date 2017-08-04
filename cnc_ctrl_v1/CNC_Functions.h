@@ -1252,6 +1252,72 @@ void  executeGcodeLine(const String& gcodeLine){
         return;
     }
     
+    if(gcodeLine.substring(0, 3) == "B12"){
+        //Move to relative XYZ coordinate in the specified time in MS, reports
+        //the mm/ms moved by each motor and the error distance in mm.
+        //This is for testing the maximum speed of the motors.  The idea is
+        //to pick a distance that the motors cannot achieve in that amount of
+        //time.  So that the error is greater than a few mm.  Then the mm/ms
+        //reported is the maximum speed of the motor.  
+        //Obviously be careful, this doesn't care if you are trying to move Off
+        //the cutting surface
+        float  time      = extractGcodeValue(gcodeLine, 'T', 100);
+        float  X         = extractGcodeValue(gcodeLine, 'X', 0);
+        float  Y         = extractGcodeValue(gcodeLine, 'Y', 0);
+        float  Z         = extractGcodeValue(gcodeLine, 'Z', 0);
+        
+        //find the chain lengths for this step
+        float aStart = leftAxis.read();
+        float bStart = rightAxis.read();
+        float zStart = zAxis.read();
+        float aEnd;
+        float bEnd;
+        float zEnd;
+        float aError;
+        float bError;
+        float zError;
+        float aChainLength;
+        float bChainLength;
+        kinematics.inverse(xTarget + X, yTarget + Y,&aChainLength,&bChainLength);
+        
+        float start = millis();
+        leftAxis.write(aChainLength);
+        rightAxis.write(bChainLength);
+        zAxis.write(zAxis.read() + Z);
+        
+        delay(time);
+        
+        aEnd = leftAxis.read();
+        bEnd = rightAxis.read();
+        zEnd = zAxis.read();
+
+        aError = leftAxis.error();
+        bError = rightAxis.error();
+        zError = zAxis.error();         
+        
+        leftAxis.endMove(aChainLength);
+        rightAxis.endMove(bChainLength);
+        zAxis.endMove(Z);
+        
+        Serial.println(F("Left = "));
+        Serial.println((aStart - aEnd)/time);
+        Serial.println(F("mm/ms, Error= "));
+        Serial.println(aError);
+        Serial.println(F("\nRight= "));
+        Serial.println((bStart - bEnd)/time);
+        Serial.println(F("mm/ms, Error= "));
+        Serial.println(bError);
+        Serial.println(F("\nzAxis= "));
+        Serial.println((zStart - zEnd)/time);
+        Serial.println(F("mm/ms, Error= "));
+        Serial.println(bError);
+        Serial.println(F("\n"));
+        
+        //update position on display
+        kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
+        returnPoz(xTarget, yTarget, zAxis.read());
+    }
+    
     //Handle G-Codes
    
     int gNumber = extractGcodeValue(gcodeLine,'G', -1);
