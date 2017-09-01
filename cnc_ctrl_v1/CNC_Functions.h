@@ -418,6 +418,132 @@ and G01 commands. The units at this point should all be in mm or mm per minute*/
     
 }
 
+int   fastMove(const float& xEnd, const float& yEnd, const float& MMPerMin){
+    
+    /*moves the tool as fast as possible in the XY direction, until it gets close 
+    then it hands it off to coordinatedMove to handle the final positioning*/
+    
+    //find the chain lengths for the end
+    float aChainLength;
+    float bChainLength;
+    float aDistLeft;
+    float bDistLeft;
+    bool leftFinished = false;
+    bool rightFinished = false;
+    kinematics.inverse(xEnd,yEnd,&aChainLength,&bChainLength);
+    
+    // //attach the axes
+    leftAxis.detach();
+    rightAxis.detach();
+
+    bool keepMoving =  true;
+    int count = 0;
+    int speed;
+    
+    while(keepMoving){
+        count++;
+        keepMoving = false;
+        aDistLeft = aChainLength - leftAxis.read();
+        bDistLeft = bChainLength - rightAxis.read();
+        
+        if (count == 1) {
+            Serial.print(F("\n"));
+            Serial.print(F("Distance to Move: "));
+            Serial.print(aDistLeft);
+            Serial.print(F(" -- "));
+            Serial.print(bDistLeft);
+            Serial.print(F("\n"));
+            Serial.print(F("start: "));
+            Serial.print(leftAxis.read());
+            Serial.print(F(" -- "));
+            Serial.print(rightAxis.read());
+            Serial.print(F("\n"));
+            Serial.print(F("End: "));
+            Serial.print(aChainLength);
+            Serial.print(F(" -- "));
+            Serial.print(bChainLength);
+        }
+        
+        if (abs(aDistLeft) > 5 && !leftFinished){
+            keepMoving = true;
+            speed = 255;
+            if (abs(aDistLeft) < 10){
+                speed = 127;
+            }
+            leftAxis.write(leftAxis.read());
+            if (aDistLeft < 0){
+                leftAxis.motorGearboxEncoder.motor.directWrite(speed);
+            }
+            else {
+                leftAxis.motorGearboxEncoder.motor.directWrite(-speed);
+            }    
+        }
+        else if (!leftFinished) {
+            //leftAxis.motorGearboxEncoder.motor.directWrite(0);
+            leftAxis.attach();
+            leftAxis.set(aChainLength);
+            leftAxis.endMove(aChainLength);
+            Serial.print(F("\nEnding Fasts left: "));
+            Serial.print(leftAxis.read());
+            leftFinished = true;
+        }
+        if (abs(bDistLeft) > 5 && !rightFinished){
+            keepMoving = true;
+            speed = 255;
+            if (abs(bDistLeft) < 10){
+                speed = 127;
+            }
+            rightAxis.write(rightAxis.read());  // Need to replace this with variable
+            if (bDistLeft < 0){
+                rightAxis.motorGearboxEncoder.motor.directWrite(speed);
+            }
+            else {
+                rightAxis.motorGearboxEncoder.motor.directWrite(-speed);
+            }    
+        }
+        else if (!rightFinished){
+            // rightAxis.motorGearboxEncoder.motor.directWrite(0);
+            rightAxis.attach();
+            rightAxis.set(bChainLength);
+            rightAxis.endMove(bChainLength);
+            Serial.print(F("\n Ending Fasts right: "));
+            Serial.print(rightAxis.read());
+            rightFinished = true;
+        }
+        
+        if (count % 10 == 0){
+            kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
+            //update position on display
+              // Need to replace this with variable
+            
+            returnPoz(xTarget, yTarget, zAxis.read());
+        }
+        
+        //check for new serial commands
+        readSerialCommands();
+        
+        //check for a STOP command
+        if(checkForStopCommand()){
+            leftAxis.endMove(leftAxis.read());
+            rightAxis.endMove(rightAxis.read());
+            
+            //make sure the positions are displayed correctly after stop
+            kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
+            
+            return 1;
+        }
+        // delay(.05);
+    }
+    
+    leftAxis.endMove(leftAxis.read());
+    rightAxis.endMove(rightAxis.read());
+    
+    kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
+    
+    return cordinatedMove(xEnd, yEnd, MMPerMin);
+    
+}
+
 void  singleAxisMove(Axis* axis, const float& endPos, const float& MMPerMin){
     /*
     Takes a pointer to an axis object and moves that axis to endPos at speed MMPerMin
@@ -595,7 +721,7 @@ int   G1(const String& readString, int G0orG1){
     }
     else{
         //if this is a rapid move
-        cordinatedMove(xgoto, ygoto, 1000); //move the same as a regular move, but go fast
+        fastMove(xgoto, ygoto, 1000); //move the same as a regular move, but go fast
     }
 }
 
