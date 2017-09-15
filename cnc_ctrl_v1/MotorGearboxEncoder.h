@@ -32,9 +32,11 @@
             void       write(const float& speed);
             void       computePID();
             void       setName(const String& newName);
+            String     name();
             void       initializePID();
             void       setPIDAggressiveness(float aggressiveness);
             void       setPIDValues(float KpV, float KiV, float KdV);
+            String     getPIDString();
         private:
             double     _targetSpeed;
             double     _currentSpeed;
