@@ -154,8 +154,11 @@ float MotorGearboxEncoder::computeSpeed(){
     
     */
     double timeElapsed =  micros() - _lastTimeStamp;
+    float  distMoved = 0;
     
-    float    distMoved   =  encoder.read() - _lastPosition; //_runningAverage(encoder.read() - _lastPosition);     //because of quantization noise it helps to average these
+    if (timeElapsed < 15000){  // If more time elapsed then we were stopped
+        distMoved   =  encoder.read() - _lastPosition;
+    }
     
     //Compute the speed in RPM
     float RPM = (7364.0*distMoved)/float(timeElapsed);  //6*10^7 us per minute, 8148 steps per revolution
