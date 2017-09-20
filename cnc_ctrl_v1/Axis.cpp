@@ -61,7 +61,7 @@ void   Axis::loadPositionFromMemory(){
 
 void   Axis::initializePID(){
     _pidController.SetMode(AUTOMATIC);
-    _pidController.SetOutputLimits(-16, 16);
+    _pidController.SetOutputLimits(-20, 20);
     _pidController.SetSampleTime(10);
 }
 
