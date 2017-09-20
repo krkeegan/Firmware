@@ -45,8 +45,7 @@
             float      _runningAverage(const int& newValue);
             String     _motorName;
             double     _pidOutput;
-            PID        _posPIDController;
-            PID        _negPIDController;
+            PID        _PIDController;
             double     _Kp=0, _Ki=0, _Kd=0;
             int        _oldValue1;
             int        _oldValue2;
