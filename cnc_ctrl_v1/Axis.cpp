@@ -65,8 +65,8 @@ void   Axis::initializePID(){
 }
 
 void    Axis::write(const float& targetPosition){
-    
-    _pidSetpoint   =  targetPosition/_mmPerRotation;
+    double numSteps = round((targetPosition/_mmPerRotation)*_encoderSteps);
+    _pidSetpoint = (numSteps/_encoderSteps);
     return;
 }
 
