@@ -357,7 +357,7 @@ float computeStepSize(const float& MMPerMin){
     
     */
     
-    return .0001575*MMPerMin; //value found empirically by running loop until there were not spare cycles
+    return .00016667*MMPerMin; //The same frequency as the PID Interrupt, 10ms 
 }
 
 int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin){
