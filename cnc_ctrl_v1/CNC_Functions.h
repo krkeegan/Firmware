@@ -19,6 +19,7 @@ libraries*/
 #include "Axis.h"
 #include "Kinematics.h"
 #include "RingBuffer.h"
+#include "Queue.h"
 
 #define VERSIONNUMBER 0.91
 
@@ -43,6 +44,7 @@ bool zAxisAttached = false;
 #define INCHES      25.4
 #define MAXFEED     900      //The maximum allowable feedrate in mm/min
 #define MAXZROTMIN  12.60    // the maximum z rotations per minute
+#define CYCLETIME  10000.00
 
 
 int ENCODER1A;
@@ -139,6 +141,9 @@ Axis zAxis    (ENB, IN3, IN4, ENCODER2B, ENCODER2A, "Z",     Z_EEPROM_ADR);
 
 Kinematics kinematics;
 RingBuffer ringBuffer;
+struct point { float l;      float r;      float z; 
+               float idealX; float idealY; float idealZ;};
+Queue<point> queue(16);
 
 int expectedMaxLineLength   = 60;   // expected maximum Gcode line length in characters, including line ending character(s)
 
@@ -390,12 +395,11 @@ float calculateDelay(const float& stepSizeMM, const float& feedrateMMPerMin){
 float computeStepSize(const float& MMPerMin){
     /*
     
-    Determines the minimum step size which can be taken for the given feed-rate
-    and still have there be enough time for the kinematics to run
+    Determines the step size in mm which can be taken for the given feed-rate
+    based on the cycle time of the PID calculations
     
     */
-    
-    return .0001575*MMPerMin; //value found empirically by running loop until there were not spare cycles
+    return (CYCLETIME / (60 *1000000))*MMPerMin; 
 }
 
 int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin){
@@ -419,8 +423,6 @@ and G01 commands. The units at this point should all be in mm or mm per minute*/
     long   finalNumberOfSteps         = distanceToMoveInMM/stepSizeMM;
     finalNumberOfSteps = abs(finalNumberOfSteps);
     
-    float delayTime = calculateDelay(stepSizeMM, MMPerMin);
-    
     // (fraction of distance in x direction)* size of step toward target
     float  xStepSize                  = (xDistanceToMoveInMM/distanceToMoveInMM)*stepSizeMM;
     float  yStepSize                  = (yDistanceToMoveInMM/distanceToMoveInMM)*stepSizeMM;
@@ -431,27 +433,25 @@ and G01 commands. The units at this point should all be in mm or mm per minute*/
     
     float aChainLength;
     float bChainLength;
+    float whereXShouldBeAtThisStep;
+    float whereYShouldBeAtThisStep;
     long   numberOfStepsTaken         =  0;
     
-    while(numberOfStepsTaken < finalNumberOfSteps){
+    while(numberOfStepsTaken < finalNumberOfSteps || queue.count() > 0){
+        if (queue.count() < 16 && numberOfStepsTaken < finalNumberOfSteps) { // check if space in queue
+            //find the target point for this step
+            whereXShouldBeAtThisStep = xStartingLocation + (numberOfStepsTaken*xStepSize);
+            whereYShouldBeAtThisStep = yStartingLocation + (numberOfStepsTaken*yStepSize);
             
-        //find the target point for this step
-        float whereXShouldBeAtThisStep = xStartingLocation + (numberOfStepsTaken*xStepSize);
-        float whereYShouldBeAtThisStep = yStartingLocation + (numberOfStepsTaken*yStepSize);
-        
-        //find the chain lengths for this step
-        kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
-        
-        //write to each axis
-        leftAxis.write(aChainLength);
-        rightAxis.write(bChainLength);
-        
-        //increment the number of steps taken
-        numberOfStepsTaken++;
-        
-        //update position on display
-        returnPoz(whereXShouldBeAtThisStep, whereYShouldBeAtThisStep, zAxis.read());
-        
+            //find the chain lengths for this step
+            kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
+            
+            //add to queue
+            queue.push(point{aChainLength, bChainLength, zAxis.read(), whereXShouldBeAtThisStep, whereYShouldBeAtThisStep, zAxis.read()});
+            
+            //increment the number of steps taken
+            numberOfStepsTaken++;
+        }
         //check for new serial commands
         readSerialCommands();
         
@@ -459,19 +459,15 @@ and G01 commands. The units at this point should all be in mm or mm per minute*/
         if(checkForStopCommand()){
             
             //set the axis positions to save
-            kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
-            leftAxis.endMove(aChainLength);
-            rightAxis.endMove(bChainLength);
+            queue.clear();
+            leftAxis.endMove(leftAxis.read());
+            rightAxis.endMove(rightAxis.read());
             
             //make sure the positions are displayed correctly after stop
-            xTarget = whereXShouldBeAtThisStep;
-            yTarget = whereYShouldBeAtThisStep;
+            kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
             
             return 1;
         }
-        
-        //wait for the step to be completed
-        delay(delayTime);
     }
     
     kinematics.inverse(xEnd,yEnd,&aChainLength,&bChainLength);
@@ -711,21 +707,12 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
     float aChainLength;
     float bChainLength;
 
-    float delayTime = calculateDelay(stepSizeMM, MMPerMin);
-    
     //attach the axes
     leftAxis.attach();
     rightAxis.attach();
     
-    long  beginingOfLastStep          = millis();
-    
-    while(numberOfStepsTaken < abs(finalNumberOfSteps)){
-        
-        //if enough time has passed to take the next step
-        if (millis() - beginingOfLastStep > delayTime){
-            
-            //reset the counter 
-            beginingOfLastStep          = millis();
+    while(numberOfStepsTaken < finalNumberOfSteps || queue.count() > 0){
+        if (queue.count() < 16 && numberOfStepsTaken < finalNumberOfSteps) { // check if space in queue
             
             degreeComplete = float(numberOfStepsTaken)/float(finalNumberOfSteps);
             
@@ -736,29 +723,25 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
             
             kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
             
-            leftAxis.write(aChainLength);
-            rightAxis.write(bChainLength);
-            
-            returnPoz(whereXShouldBeAtThisStep, whereYShouldBeAtThisStep, zAxis.read());
+            //add to queue
+            queue.push(point{aChainLength, bChainLength, zAxis.read(), whereXShouldBeAtThisStep, whereYShouldBeAtThisStep, zAxis.read()});
             
             numberOfStepsTaken++;
+        }
+        //check for new serial commands
+        readSerialCommands();
+        
+        //check for a STOP command
+        if(checkForStopCommand()){
+            //set the axis positions to save
+            queue.clear();
+            leftAxis.endMove(leftAxis.read());
+            rightAxis.endMove(rightAxis.read());
             
-            //check for new serial commands
-            readSerialCommands();
+            //make sure the positions are displayed correctly after stop
+            kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
             
-            //check for a STOP command
-            if(checkForStopCommand()){
-                //set the axis positions to save
-                kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
-                leftAxis.endMove(aChainLength);
-                rightAxis.endMove(bChainLength);
-                
-                //make sure the positions are displayed correctly after stop
-                xTarget = whereXShouldBeAtThisStep;
-                yTarget = whereYShouldBeAtThisStep;
-                
-                return 1;
-            }
+            return 1;
         }
     }
     

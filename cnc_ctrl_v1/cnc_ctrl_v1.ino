@@ -32,7 +32,7 @@ void setup(){
     _signalReady();
     
     
-    Timer1.initialize(10000);
+    Timer1.initialize(CYCLETIME);
     Timer1.attachInterrupt(runsOnATimer);
     
     Serial.println(F("Grbl v1.00"));
@@ -40,6 +40,14 @@ void setup(){
 }
 
 void runsOnATimer(){
+    if (queue.count() > 0){
+        point command = queue.pop();
+        leftAxis.write(command.l);
+        rightAxis.write(command.r);
+        zAxis.write(command.z);
+        //update position on display
+        returnPoz(command.idealX, command.idealY, command.idealZ);
+    }
     leftAxis.computePID();
     rightAxis.computePID();
     zAxis.computePID();
