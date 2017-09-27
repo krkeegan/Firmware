@@ -307,6 +307,31 @@ bool checkForStopCommand(){
     return 0;
 }
 
+bool stopNow(){
+    /*
+    Checks to see is a stop command was sent, and if it was stops the axes
+    immediatly.  Should be called periodically, likely no faster than 10ms
+    but the longer the wait, the longer the delay before a stop
+    */
+  
+    //check for new serial commands
+    readSerialCommands();
+    
+    //check for a STOP command
+    if(checkForStopCommand()){
+        
+        //set the axis positions to save
+        leftAxis.endMove(leftAxis.read());
+        rightAxis.endMove(rightAxis.read());
+        
+        //make sure the positions are displayed correctly after stop
+        kinematics.forward(leftAxis.read(), rightAxis.read(), &xTarget, &yTarget);
+        
+        return 1;
+    }
+    return 0;
+}
+
 void  holdPosition(){
     leftAxis.hold();
     rightAxis.hold();
@@ -1200,9 +1225,10 @@ void PIDTestVelocity(Axis* axis, const float start, const float stop, const floa
     Serial.println("Axis=" + axis->motorGearboxEncoder.name());
     Serial.println(axis->motorGearboxEncoder.getPIDString());
 
-    double startTime;
-    double print = micros();
-    double current = micros();
+    unsigned long startTime;
+    unsigned long print = millis();
+    unsigned long current = millis();
+    unsigned long stop = millis();
     float lastPosition = axis->motorGearboxEncoder.encoder.read();
     float error;
     float distMoved;
@@ -1219,11 +1245,11 @@ void PIDTestVelocity(Axis* axis, const float start, const float stop, const floa
         if (i > 0){
             speed = start + (span * (i/(steps-1)));
         }
-        startTime = micros();
+        startTime = millis();
         axis->motorGearboxEncoder.write(speed);
-        while (startTime + 2000000 > current){
-          if (current - print > 20000){
-            // Calculate and log error on same frequency as PID interrupt
+        while (startTime + 2000 > current){
+          if (current - print > 20){
+            // Calculate and log error at half frequency as PID interrupt
             distMoved   =  axis->motorGearboxEncoder.encoder.read() - lastPosition;
             reportedSpeed= (7364.0*distMoved)/float(current - print);  //6*10^7 us per minute, 8148 steps per revolution
             lastPosition  = axis->motorGearboxEncoder.encoder.read();
@@ -1231,7 +1257,14 @@ void PIDTestVelocity(Axis* axis, const float start, const float stop, const floa
             print = current;
             Serial.println(error);
           }
-          current = micros();
+          if (current - stop > 500){
+            if (stopNow()){
+              i = steps; // Exit the for loop
+              break;
+            }
+            stop = current;
+          }
+          current = millis();
         }
     }
     axis->motorGearboxEncoder.write(0);
@@ -1251,9 +1284,10 @@ void PIDTestPosition(Axis* axis, float start, float stop, const float steps, con
     Serial.println("Axis=" + axis->motorGearboxEncoder.name());
     Serial.println(axis->getPIDString());
 
-    double startTime;
-    double print = millis();
-    double current = millis();
+    unsigned long startTime;
+    unsigned long print = millis();
+    unsigned long current = millis();
+    unsigned long stop = millis();
     float error;
     start = axis->read() + start;
     stop  = axis->read() + stop;
@@ -1272,10 +1306,17 @@ void PIDTestPosition(Axis* axis, float start, float stop, const float steps, con
         axis->write(location);
         while (startTime + stepTime > current){
           if (current - print > (stepTime/10)){
-            // Calculate and log error 100 times per step
+            // Calculate and log error 10 times per step
             error   =  axis->read() - location;
             print = current;
             Serial.println(error);
+          }
+          if (current - stop > 500){
+            if (stopNow()){
+              i = steps; // Exit the for loop
+              break;
+            }
+            stop = current;
           }
           current = millis();
         }
