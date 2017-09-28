@@ -43,7 +43,7 @@ bool zAxisAttached = false;
 #define INCHES      25.4
 #define MAXFEED     900      //The maximum allowable feedrate in mm/min
 #define MAXZROTMIN  12.60    // the maximum z rotations per minute
-
+#define LOOPINTERVAL 10.00
 
 int ENCODER1A;
 int ENCODER1B;
@@ -378,13 +378,7 @@ float calculateDelay(const float& stepSizeMM, const float& feedrateMMPerMin){
     Calculate the time delay between each step for a given feedrate
     */
     
-    #define MINUTEINMS 60000.0
-    
-    // derivation: ms / step = 1 min in ms / dist in one min
-    
-    float msPerStep = (stepSizeMM*MINUTEINMS)/feedrateMMPerMin;
-    
-    return msPerStep;
+    return LOOPINTERVAL;
 }
 
 float computeStepSize(const float& MMPerMin){
@@ -395,7 +389,7 @@ float computeStepSize(const float& MMPerMin){
     
     */
     
-    return .0001575*MMPerMin; //value found empirically by running loop until there were not spare cycles
+    return (LOOPINTERVAL/60000)*MMPerMin;
 }
 
 int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin){
@@ -419,8 +413,6 @@ int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin
     long   finalNumberOfSteps         = distanceToMoveInMM/stepSizeMM;
     finalNumberOfSteps = abs(finalNumberOfSteps);
     
-    float delayTime = calculateDelay(stepSizeMM, MMPerMin);
-    
     // (fraction of distance in x direction)* size of step toward target
     float  xStepSize                  = (xDistanceToMoveInMM/distanceToMoveInMM)*stepSizeMM;
     float  yStepSize                  = (yDistanceToMoveInMM/distanceToMoveInMM)*stepSizeMM;
@@ -436,10 +428,7 @@ int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin
     
     while(numberOfStepsTaken < finalNumberOfSteps){
         //if enough time has passed to take the next step
-        if (millis() - beginingOfLastStep > delayTime){
-          
-            //reset the counter 
-            beginingOfLastStep          = millis();
+        if (millis() - beginingOfLoop > (LOOPINTERVAL*numberOfStepsTaken)) {
               
             //find the target point for this step
             float whereXShouldBeAtThisStep = xStartingLocation + (numberOfStepsTaken*xStepSize);
@@ -716,8 +705,6 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
     
     float aChainLength;
     float bChainLength;
-
-    float delayTime = calculateDelay(stepSizeMM, MMPerMin);
     
     //attach the axes
     leftAxis.attach();
@@ -728,10 +715,7 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
     while(numberOfStepsTaken < abs(finalNumberOfSteps)){
         
         //if enough time has passed to take the next step
-        if (millis() - beginingOfLastStep > delayTime){
-            
-            //reset the counter 
-            beginingOfLastStep          = millis();
+        if (millis() - beginingOfLoop > (numberOfStepsTaken * LOOPINTERVAL)){
             
             degreeComplete = float(numberOfStepsTaken)/float(finalNumberOfSteps);
             
