@@ -70,6 +70,8 @@
             int        _eepromAdr;
             float      _mmPerRotation = 1;
             float      _encoderSteps  = 100;
+            float      _mmPerEncoderStep = 1;
+            float      _mmOfHalfEncoderStep = .5;
             float      _oldSetpoint;
             bool       _disableAxisForTesting = false;
             String     _axisName;

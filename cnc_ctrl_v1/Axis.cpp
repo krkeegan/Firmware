@@ -65,14 +65,14 @@ void   Axis::initializePID(){
 }
 
 void    Axis::write(const float& targetPosition){
-    
+    /* 
+    Sets the desired position of the axis, is called in movement loop
+    so needs to be as fast as possible, pidsetpoint = to float of # of 
+    rotations
+    */
     // Ensure that _pidSetpoint is equal to whole number of encoder steps
-    float steps = (targetPosition/_mmPerRotation) * _encoderSteps;
-    steps = steps * 2;
-    steps = round(steps);
-    steps = steps /2;
+    unsigned long steps = (targetPosition + _mmOfHalfEncoderStep) / _mmPerEncoderStep;
     _pidSetpoint   =  steps/_encoderSteps;
-    return;
 }
 
 float  Axis::read(){
@@ -178,6 +178,8 @@ void   Axis::changePitch(const float& newPitch){
     Reassign the distance moved per-rotation for the axis.
     */
     _mmPerRotation = newPitch;
+    _mmPerEncoderStep = _mmPerRotation/_encoderSteps;
+    _mmOfHalfEncoderStep = _mmPerEncoderStep/2;
 }
 
 void   Axis::changeEncoderResolution(const int& newResolution){
@@ -185,7 +187,8 @@ void   Axis::changeEncoderResolution(const int& newResolution){
     Reassign the encoder resolution for the axis.
     */
     _encoderSteps = newResolution;
-    
+    _mmPerEncoderStep = _mmPerRotation/_encoderSteps;
+    _mmOfHalfEncoderStep = _mmPerEncoderStep/2;
     //push to the gearbox for calculating RPM
     motorGearboxEncoder.setEncoderResolution(newResolution);
     
