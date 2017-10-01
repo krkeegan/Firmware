@@ -191,15 +191,11 @@ void  Kinematics::triangularInverse(float xTarget,float yTarget, float* aChainLe
     //Confirm that the coordinates are on the wood
     _verifyValidTarget(&xTarget, &yTarget);
     
-    float Chain1 = sqrt(pow((-1*_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
-    float Chain2 = sqrt(pow((_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
-    
     //Subtract of the virtual length which is added to the chain by the rotation mechanism
-    Chain1 = Chain1 - rotationDiskRadius;
-    Chain2 = Chain2 - rotationDiskRadius;
-    
-    *aChainLength = Chain1;
-    *bChainLength = Chain2;
+    float ySquare = sq(_yCordOfMotor - yTarget);
+    *aChainLength = sqrt(sq(-_xCordOfMotor - xTarget)+ySquare) - rotationDiskRadius; 
+    *bChainLength = sqrt(sq(_xCordOfMotor - xTarget)+ySquare) - rotationDiskRadius;
+
 }
 
 void  Kinematics::forward(const float& chainALength, const float& chainBLength, float* xPos, float* yPos){
