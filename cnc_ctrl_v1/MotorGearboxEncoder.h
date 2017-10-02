@@ -60,7 +60,7 @@
             int        _oldValue8;
             int        _oldValue9;
             int        _oldValue10;
-            unsigned int _minimumRPM = 500;
+            unsigned int _minimumRPM = .5 * 8;
     };
 
     #endif
