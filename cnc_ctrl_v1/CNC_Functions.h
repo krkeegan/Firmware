@@ -477,23 +477,26 @@ int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin
             //update position on display
             returnPoz(whereXShouldBeAtThisStep, whereYShouldBeAtThisStep, zAxis.read());
             
-            // This section ~10us
-            //check for new serial commands
-            readSerialCommands();
+            if (numberOfStepsTaken % 100 == 0){
             
-            //check for a STOP command
-            if(checkForStopCommand()){
+                // This section ~10us
+                //check for new serial commands
+                readSerialCommands();
                 
-                //set the axis positions to save
-                kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
-                leftAxis.endMove(aChainLength);
-                rightAxis.endMove(bChainLength);
-                
-                //make sure the positions are displayed correctly after stop
-                xTarget = whereXShouldBeAtThisStep;
-                yTarget = whereYShouldBeAtThisStep;
-                
-                return 1;
+                //check for a STOP command
+                if(checkForStopCommand()){
+                    
+                    //set the axis positions to save
+                    kinematics.inverse(whereXShouldBeAtThisStep,whereYShouldBeAtThisStep,&aChainLength,&bChainLength);
+                    leftAxis.endMove(aChainLength);
+                    rightAxis.endMove(bChainLength);
+                    
+                    //make sure the positions are displayed correctly after stop
+                    xTarget = whereXShouldBeAtThisStep;
+                    yTarget = whereYShouldBeAtThisStep;
+                    
+                    return 1;
+                }
             }
         }
     }

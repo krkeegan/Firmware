@@ -20,6 +20,7 @@
 
     #include "Arduino.h"
     #include "PID_v1.h"
+    #include "PID_int.h"
     #include <EEPROM.h>
     #include "MotorGearboxEncoder.h"
     
@@ -63,10 +64,11 @@
             int        _previousAngle;
             double     _timeLastMoved;
             volatile double _pidSetpoint;
-            volatile double _pidInput; 
-            volatile double _pidOutput;
+            volatile long _pidStepSetpoint;
+            volatile long _pidInput; 
+            volatile long _pidOutput;
             double     _Kp=0, _Ki = 0, _Kd=0;
-            PID        _pidController;
+            PID_int    _pidController;
             int        _eepromAdr;
             float      _mmPerRotation = 1;
             float      _encoderSteps  = 100;

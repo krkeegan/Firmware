@@ -31,7 +31,7 @@ Axis::Axis(const int& pwmPin, const int& directionPin1, const int& directionPin2
 motorGearboxEncoder(pwmPin, directionPin1, directionPin2, encoderPin1, encoderPin2)
 {
     
-    _pidController.setup(&_pidInput, &_pidOutput, &_pidSetpoint, 0, 0, 0, P_ON_E, REVERSE);
+    _pidController.setup(&_pidInput, &_pidOutput, &_pidStepSetpoint, 0, 0, 0, P_ON_E, REVERSE);
     
     //initialize variables
     _axisName     = axisName;
@@ -60,8 +60,8 @@ void   Axis::loadPositionFromMemory(){
 
 void   Axis::initializePID(){
     _pidController.SetMode(AUTOMATIC);
-    _pidController.SetOutputLimits(-20, 20);
-    _pidController.SetSampleTime(10);
+    _pidController.SetOutputLimits(-20*1024L, 20*1024L);
+    _pidController.SetSampleTime(10000);
 }
 
 void    Axis::write(const float& targetPosition){
@@ -75,6 +75,7 @@ void    Axis::write(const float& targetPosition){
     steps = steps * 2;
     steps = round(steps);
     steps = steps /2;
+    _pidStepSetpoint = steps;
     _pidSetpoint   =  steps/_encoderSteps;
 }
 
@@ -110,7 +111,7 @@ void   Axis::computePID(){
         return;
     }
     
-    _pidInput      =  motorGearboxEncoder.encoder.read()/_encoderSteps;
+    _pidInput      =  motorGearboxEncoder.encoder.read();
     
     if (_pidController.Compute()){
         // Only write output if the PID calculation was performed
@@ -143,7 +144,7 @@ void   Axis::setPIDValues(float KpPos, float KiPos, float KdPos, float propWeigh
     _Ki = KiPos;
     _Kd = KdPos;
     
-    _pidController.SetTunings(_Kp, _Ki, _Kd, propWeight);
+    _pidController.SetTunings(_Kp/8, _Ki/8, _Kd/8, propWeight);
     
     motorGearboxEncoder.setPIDValues(KpV, KiV, KdV);
 }
