@@ -71,7 +71,10 @@ void    Axis::write(const float& targetPosition){
     rotations
     */
     // Ensure that _pidSetpoint is equal to whole number of encoder steps
-    unsigned long steps = (targetPosition + _mmOfHalfEncoderStep) / _mmPerEncoderStep;
+    float steps = (targetPosition/_mmPerRotation) * _encoderSteps;
+    steps = steps * 2;
+    steps = round(steps);
+    steps = steps /2;
     _pidSetpoint   =  steps/_encoderSteps;
 }
 
