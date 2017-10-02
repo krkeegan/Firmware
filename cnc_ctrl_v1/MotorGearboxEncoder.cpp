@@ -45,15 +45,15 @@ void  MotorGearboxEncoder::write(const float& speed){
     Command the motor to turn at the given speed. Should be RPM is PWM right now.
     */
     
-    _targetSpeed = speed;
+    _targetSpeed = (speed * 1000);
     
 }
 
 void   MotorGearboxEncoder::initializePID(){
     //setup positive PID controller
     _PIDController.SetMode(AUTOMATIC);
-    _PIDController.SetOutputLimits(-255, 255);
-    _PIDController.SetSampleTime(10);
+    _PIDController.SetOutputLimits(-255000, 255000);
+    _PIDController.SetSampleTime(10000);
 }
 
 void  MotorGearboxEncoder::computePID(){
@@ -112,7 +112,7 @@ void  MotorGearboxEncoder::computePID(){
     }*/
     
     //motor.attach();
-    motor.write(_pidOutput);
+    motor.write(_pidOutput/1000);
 }
 
 void  MotorGearboxEncoder::setPIDValues(float KpV, float KiV, float KdV){
@@ -122,9 +122,9 @@ void  MotorGearboxEncoder::setPIDValues(float KpV, float KiV, float KdV){
     
     */
     
-    _Kp = KpV;
-    _Ki = KiV;
-    _Kd = KdV;
+    _Kp = KpV*1000;
+    _Ki = KiV*1000;
+    _Kd = KdV*1000;
     
     _PIDController.SetTunings(_Kp, _Ki, _Kd, P_ON_E);
 }
@@ -136,7 +136,7 @@ String  MotorGearboxEncoder::getPIDString(){
     
     */
     String PIDString = "Kp=";
-    return PIDString + _Kp + ",Ki=" + _Ki + ",Kd=" + _Kd;
+    return PIDString + (_Kp/1000) + ",Ki=" + (_Ki/1000) + ",Kd=" + (_Kd/1000);
 }
 
 void MotorGearboxEncoder::setPIDAggressiveness(float aggressiveness){
@@ -162,18 +162,18 @@ void MotorGearboxEncoder::setEncoderResolution(float resolution){
     
 }
 
-float MotorGearboxEncoder::computeSpeed(){
+long MotorGearboxEncoder::computeSpeed(){
     /*
     
     Returns the motors speed in RPM since the last time this function was called
     
     */
-    double timeElapsed =  micros() - _lastTimeStamp;
+    unsigned long timeElapsed =  micros() - _lastTimeStamp;
     
-    float    distMoved   =  encoder.read() - _lastPosition; //_runningAverage(encoder.read() - _lastPosition);     //because of quantization noise it helps to average these
+    long distMoved   =  encoder.read() - _lastPosition;
     
     //Compute the speed in RPM
-    float RPM = (_encoderStepsToRPMScaleFactor*distMoved)/float(timeElapsed);
+    long RPM = (1000*_encoderStepsToRPMScaleFactor*distMoved)/timeElapsed;
     
     //Store values for next time
     _lastTimeStamp = micros();

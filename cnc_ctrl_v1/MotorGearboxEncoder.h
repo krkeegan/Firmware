@@ -22,13 +22,14 @@
     #include "Encoder.h"
     #include "Motor.h"
     #include "PID_v1.h"
+    #include "PID_int.h"
     
     class MotorGearboxEncoder{
         public:
             MotorGearboxEncoder(const int& pwmPin, const int& directionPin1, const int& directionPin2, const int& encoderPin1, const int& encoderPin2);
             Encoder    encoder;
             Motor      motor;
-            float      computeSpeed();
+            long      computeSpeed();
             void       write(const float& speed);
             void       computePID();
             void       setName(const String& newName);
@@ -39,15 +40,15 @@
             void       setEncoderResolution(float resolution);
             String     getPIDString();
         private:
-            double     _targetSpeed;
-            double     _currentSpeed;
-            double     _lastPosition;
-            double     _lastTimeStamp;
+            long       _targetSpeed;
+            long       _currentSpeed;
+            unsigned long     _lastPosition;
+            unsigned long     _lastTimeStamp;
             float      _runningAverage(const int& newValue);
             String     _motorName;
-            double     _pidOutput;
-            PID        _PIDController;
-            double     _Kp=0, _Ki=0, _Kd=0;
+            long       _pidOutput;
+            PID_int    _PIDController;
+            unsigned long _Kp=0, _Ki=0, _Kd=0;
             float      _encoderStepsToRPMScaleFactor = 7364.0;   //6*10^7 us per minute divided by 8148 steps per revolution
             int        _oldValue1;
             int        _oldValue2;
@@ -59,7 +60,7 @@
             int        _oldValue8;
             int        _oldValue9;
             int        _oldValue10;
-            float      _minimumRPM = 0.5;
+            unsigned int _minimumRPM = 500;
     };
 
     #endif
