@@ -157,7 +157,7 @@ bool  zEncoderStepsChanged  =  false;
 volatile bool  movementUpdated  =  false;
 
 // Global variables for misloop tracking
-#if misloopDebug > 1              
+#if misloopDebug > 0
 volatile bool  inMovementLoop   =  false;
 volatile bool  movementFail     =  false;
 #endif
@@ -404,7 +404,7 @@ float computeStepSize(const float& MMPerMin){
 }
  
 void movementUpdate(){
-  #if misloopDebug > 1  
+  #if misloopDebug > 0
   if (movementFail){
     Serial.println("Movement loop failed to complete before interrupt.");
     movementFail = false;
@@ -450,7 +450,7 @@ int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin
     
     while(numberOfStepsTaken < finalNumberOfSteps){
       
-        #if misloopDebug > 1   
+        #if misloopDebug > 0
         inMovementLoop = true;
         #endif
         //if last movment was performed start the next
@@ -497,7 +497,7 @@ int   cordinatedMove(const float& xEnd, const float& yEnd, const float& MMPerMin
             }
         }
     }
-    #if misloopDebug > 1 
+    #if misloopDebug > 0
     inMovementLoop = false;
     #endif
     
@@ -535,8 +535,7 @@ void  singleAxisMove(Axis* axis, const float& endPos, const float& MMPerMin){
     axis->attach();
     
     float whereAxisShouldBeAtThisStep = startingPos;
-    
-    #if misloopDebug > 1 
+    #if misloopDebug > 0
     inMovementLoop = true;
     #endif
     while(numberOfStepsTaken < finalNumberOfSteps){
@@ -564,7 +563,7 @@ void  singleAxisMove(Axis* axis, const float& endPos, const float& MMPerMin){
             return;
         }
     }
-    #if misloopDebug > 1 
+    #if misloopDebug > 0
     inMovementLoop = false;
     #endif
     
@@ -749,7 +748,7 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
     rightAxis.attach();
     
     while(numberOfStepsTaken < abs(finalNumberOfSteps)){
-        #if misloopDebug > 1 
+        #if misloopDebug > 0
         inMovementLoop = true;
         #endif
         
@@ -791,7 +790,7 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
             }
         }
     }
-    #if misloopDebug > 1 
+    #if misloopDebug > 0
     inMovementLoop = false;
     #endif
     
