@@ -40,13 +40,13 @@
             void       setEncoderResolution(float resolution);
             String     getPIDString();
         private:
-            long       _targetSpeed;
-            long       _currentSpeed;
+            volatile long     _targetSpeed;
+            volatile long     _currentSpeed;
             unsigned long     _lastPosition;
             unsigned long     _lastTimeStamp;
             float      _runningAverage(const int& newValue);
             String     _motorName;
-            long       _pidOutput;
+            volatile long _pidOutput;
             PID_int    _PIDController;
             unsigned long _Kp=0, _Ki=0, _Kd=0;
             float      _encoderStepsToRPMScaleFactor = 7364.0;   //6*10^7 us per minute divided by 8148 steps per revolution
