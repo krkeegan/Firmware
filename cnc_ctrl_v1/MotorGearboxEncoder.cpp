@@ -45,7 +45,7 @@ void  MotorGearboxEncoder::write(const float& speed){
     Command the motor to turn at the given speed. Should be RPM is PWM right now.
     */
     
-    _targetSpeed = (speed * 1000);
+    _targetSpeed = (speed * 1024);
     
 }
 
@@ -112,7 +112,7 @@ void  MotorGearboxEncoder::computePID(){
     }*/
     
     //motor.attach();
-    motor.write(_pidOutput/1000);
+    motor.write(_pidOutput >> 10);
 }
 
 void  MotorGearboxEncoder::setPIDValues(float KpV, float KiV, float KdV){
@@ -122,9 +122,9 @@ void  MotorGearboxEncoder::setPIDValues(float KpV, float KiV, float KdV){
     
     */
     
-    _Kp = KpV*1000;
-    _Ki = KiV*1000;
-    _Kd = KdV*1000;
+    _Kp = KpV * 1024;
+    _Ki = KiV * 1024;
+    _Kd = KdV * 1024;
     
     _PIDController.SetTunings(_Kp, _Ki, _Kd, P_ON_E);
 }
@@ -136,7 +136,7 @@ String  MotorGearboxEncoder::getPIDString(){
     
     */
     String PIDString = "Kp=";
-    return PIDString + (_Kp/1000) + ",Ki=" + (_Ki/1000) + ",Kd=" + (_Kd/1000);
+    return PIDString + (_Kp >> 10) + ",Ki=" + (_Ki >> 10) + ",Kd=" + (_Kd >> 10);
 }
 
 void MotorGearboxEncoder::setPIDAggressiveness(float aggressiveness){
@@ -171,9 +171,10 @@ long MotorGearboxEncoder::computeSpeed(){
     unsigned long timeElapsed =  micros() - _lastTimeStamp;
     
     long distMoved   =  encoder.read() - _lastPosition;
+    distMoved = distMoved << 10;
     
     //Compute the speed in RPM
-    long RPM = (1000*_encoderStepsToRPMScaleFactor*distMoved)/timeElapsed;
+    long RPM = (_encoderStepsToRPMScaleFactor*distMoved)/timeElapsed;
     
     //Store values for next time
     _lastTimeStamp = micros();
