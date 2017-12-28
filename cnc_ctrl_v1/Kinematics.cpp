@@ -260,11 +260,8 @@ void  Kinematics::forward(const float& chainALength, const float& chainBLength, 
         //if we've converged on the point...or it's time to give up, exit the loop
         if((abs(aChainError) < .1 && abs(bChainError) < .1) or guessCount > KINEMATICSMAXGUESS){
             if(guessCount > KINEMATICSMAXGUESS){
-                Serial.print(F("Message: Unable to find valid machine position for chain lengths "));
-                Serial.print(chainALength);
-                Serial.print(", ");
-                Serial.print(chainBLength);
-                Serial.println(F(" . Please calibrate chain lengths."));
+                reportFeedbackMessage(MESSAGE_CHAIN_LENGTH_ERROR);
+                sys.alarm = EXEC_ALARM_POSITION_LOST;
                 *xPos = 0;
                 *yPos = 0;
             }

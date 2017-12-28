@@ -52,10 +52,10 @@ void  reportStatusMessage(byte status_code){
           // Serial.println(F("Value < 3 usec")); break;
           case STATUS_SETTING_READ_FAIL:
             Serial.println(F("EEPROM read fail. Using default settings.")); break;
-          // case STATUS_IDLE_ERROR:
-          // Serial.println(F("Not idle")); break;
-          // case STATUS_ALARM_LOCK:
-          // Serial.println(F("Alarm lock")); break;
+          case STATUS_IDLE_ERROR:
+            Serial.println(F("Not idle")); break;
+          case STATUS_ALARM_LOCK:
+            Serial.println(F("Alarm lock, $X to unlock")); break;
           // case STATUS_SOFT_LIMIT_ERROR:
           // Serial.println(F("Homing not enabled")); break;
           // case STATUS_OVERFLOW:
@@ -87,8 +87,8 @@ void reportFeedbackMessage(byte message_code){
     //   Serial.print(F("Reset to continue")); break;
     // case MESSAGE_ALARM_LOCK:
     //   Serial.print(F("'$H'|'$X' to unlock")); break;
-    // case MESSAGE_ALARM_UNLOCK:
-    //   Serial.print(F("Caution: Unlocked")); break;
+    case MESSAGE_ALARM_UNLOCK:
+      Serial.print(F("Caution: Alarm Unlocked")); break;
     // case MESSAGE_ENABLED:
     //   Serial.print(F("Enabled")); break;
     // case MESSAGE_DISABLED:
@@ -100,11 +100,18 @@ void reportFeedbackMessage(byte message_code){
     // case MESSAGE_PROGRAM_END:
     //   Serial.print(F("Pgm End")); break;
     case MESSAGE_RESTORE_DEFAULTS:
-      Serial.print(F("Restoring defaults")); break;
+      Serial.print(F("Restoring default settings")); break;
     // case MESSAGE_SPINDLE_RESTORE:
     //   Serial.print(F("Restoring spindle")); break;
     // case MESSAGE_SLEEP_MODE:
     //   Serial.print(F("Sleeping")); break;
+    case MESSAGE_CHAIN_LENGTH_ERROR:
+      Serial.print(F("Unable to find valid machine position for chain lengths"));
+      Serial.print(leftAxis.read());
+      Serial.print(", ");
+      Serial.print(leftAxis.read());
+      Serial.println(F(" . Please calibrate chain lengths or check settings."));
+      break;
   }
   Serial.println(F(" "));
 }
@@ -116,8 +123,8 @@ void  reportAlarmMessage(byte alarm_code) {
     Serial.println(alarm_code);
   #else
     switch (alarm_code) {
-      case ALARM_POSITION_LOST:
-      Serial.println(F("Position Lost")); break;
+      case EXEC_ALARM_POSITION_LOST:
+        Serial.println(F("Position Lost, check settings or recalibrate chain lengths")); break;
     }
   #endif
 }

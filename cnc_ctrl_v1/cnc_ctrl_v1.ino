@@ -20,9 +20,6 @@ system_t sys;
 // Define the global settings storage - treat as readonly
 settings_t sysSettings;
 
-// Global realtime executor bitflag variable for setting various alarms.
-byte systemRtExecAlarm;  
-
 // Define axes, it might be tighter to define these within the sys struct
 Axis leftAxis;
 Axis rightAxis;

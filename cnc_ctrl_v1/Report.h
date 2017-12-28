@@ -65,7 +65,7 @@ Copyright 2014-2017 Bar Smith*/
 #define MESSAGE_ALARM_UNLOCK 3
 #define MESSAGE_ENABLED 4
 #define MESSAGE_DISABLED 5
-#define MESSAGE_SAFETY_DOOR_AJAR 6
+#define MESSAGE_CHAIN_LENGTH_ERROR 6
 #define MESSAGE_CHECK_LIMITS 7
 #define MESSAGE_PROGRAM_END 8
 #define MESSAGE_RESTORE_DEFAULTS 9
@@ -75,6 +75,7 @@ Copyright 2014-2017 Bar Smith*/
 void  reportStatusMessage(byte);
 void  reportFeedbackMessage(byte);
 void  reportMaslowSettings();
+void  reportAlarmMessage(byte);
 void  returnError();
 void  returnPoz();
 void  reportMaslowHelp();

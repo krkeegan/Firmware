@@ -527,6 +527,9 @@ byte  interpretCommandString(String& cmdString){
         else if (sys.state == STATE_OLD_SETTINGS){
           return STATUS_OLD_SETTINGS;
         }
+        else if (sys.state == STATE_ALARM){
+          return STATUS_ALARM_LOCK;
+        }
         else {
             while(cmdString.length() > 0){          //Extract each line of gcode from the string
                 firstG  = findNextGM(cmdString, 0);

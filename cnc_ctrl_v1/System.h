@@ -41,6 +41,14 @@ Copyright 2014-2017 Bar Smith*/
 #define STATE_SAFETY_DOOR   bit(5) // Safety door is ajar. Feed holds and de-energizes system.
 #define STATE_MOTION_CANCEL bit(6) // Motion cancel by feed hold and return to idle. 
 
+// Alarm executor codes. Valid values (1-255). Zero is reserved.
+#define EXEC_ALARM_HARD_LIMIT           1
+#define EXEC_ALARM_SOFT_LIMIT           2
+#define EXEC_ALARM_ABORT_CYCLE          3
+#define EXEC_ALARM_PROBE_FAIL_INITIAL   4
+#define EXEC_ALARM_PROBE_FAIL_CONTACT   5
+#define EXEC_ALARM_POSITION_LOST        6
+
 // Define old settings flag details
 #define NEED_ENCODER_STEPS bit(0)
 #define NEED_DIST_PER_ROT bit(1)
@@ -53,6 +61,7 @@ typedef struct {
   bool stop;                  // Stop flag.
   byte state;                 // State tracking flag
   byte pause;                 // Pause flag.
+  byte alarm;                 // Alarm flag
   float xPosition;            // Cartessian position of XY axes
   float yPosition;            // Cached because calculating position is intensive
   float steps[3];             // Encoder position of axes
@@ -73,7 +82,6 @@ extern Axis rightAxis;
 extern Axis zAxis;
 extern RingBuffer incSerialBuffer;
 extern Kinematics kinematics;
-extern byte systemRtExecAlarm;
 
 void  calibrateChainLengths(String);
 void  setupAxes();

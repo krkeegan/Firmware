@@ -191,9 +191,7 @@ void settingsLoadStepsFromEEprom(){
         Serial.println(F("Please set $12, $13, $19, and $20 to load position."));
     }
     else {
-        systemRtExecAlarm |= ALARM_POSITION_LOST;  // if this same global is touched by ISR then need to make atomic somehow
-                                                   // also need to consider if need difference between flag with bits and
-                                                   // error message as a byte.
+        sys.alarm = EXEC_ALARM_POSITION_LOST;
     }
 }
 

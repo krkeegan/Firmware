@@ -160,7 +160,6 @@ int getPCBVersion(){
     return (8*digitalRead(53) + 4*digitalRead(52) + 2*digitalRead(23) + 1*digitalRead(22)) - 1;
 }
 
-
 // This should likely go away and be handled by setting the pause flag and then
 // pausing in the execSystemRealtime function
 // Need to check if all returns from this subsequently look to sys.stop
@@ -185,12 +184,6 @@ void pause(){
         if (sys.stop){return;}
     }    
 }
-
-
-// This is an important concept.  I think maybe this should be expanded and Used
-// whenever we have a delay.  This should be all of the 'realtime' operations
-// and should probably include check for stop command.  Although, the holdPosition
-// would have to be moved out of here, but I think that is probably correct
 
 // need to check if all returns from here check for sys.stop
 void maslowDelay(unsigned long waitTimeMs) {
@@ -221,7 +214,21 @@ void execSystemRealtime(){
     returnPoz();
     systemSaveAxesPosition();
     motionDetachIfIdle();
-    // check systemRtExecAlarm flag and do stuff
+    // Check for Alarms
+    if (sys.alarm){
+      // Hard Alarms 
+      // These could lock up the system in a loop here and force a full restart 
+      // of the Arduino.  Grbl uses this when it wants to force the machine 
+      // back into a know state.  Since we don't have a homing cycle, I don't
+      // think we have a need for these yet.
+      
+      // Soft Alarms
+      // 1) Report the alarm, 2) put the machine in an STATE_ALARM preventing
+      // actions other than $ commands from running.
+      reportAlarmMessage(sys.alarm);
+      sys.alarm = 0;  // clear the alarm flag
+      sys.state = STATE_ALARM;
+    }
 }
 
 void systemSaveAxesPosition(){
@@ -318,17 +325,12 @@ byte systemExecuteCmdstring(String& cmdString){
               //     report_feedback_message(MESSAGE_ENABLED);
               //   }
               //   break;
-              // case 'X' : // Disable alarm lock [ALARM]
-              //   if (sys.state == STATE_ALARM) {
-              //     report_feedback_message(MESSAGE_ALARM_UNLOCK);
-              //     sys.state = STATE_IDLE;
-              //     // Don't run startup script. Prevents stored moves in startup from causing accidents.
-              //     if (system_check_safety_door_ajar()) { // Check safety door switch before returning.
-              //       bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-              //       protocol_execute_realtime(); // Enter safety door mode.
-              //     }
-              //   } // Otherwise, no effect.
-              //   break;
+              case 'X' : // Disable alarm lock [ALARM]
+                if (sys.state == STATE_ALARM) {
+                  reportFeedbackMessage(MESSAGE_ALARM_UNLOCK);
+                  sys.state = STATE_IDLE;
+                } // Otherwise, no effect.
+                break;
             }
             break;
           //case 'J' : break;  // Jogging methods
@@ -348,7 +350,7 @@ byte systemExecuteCmdstring(String& cmdString){
               //break;
           default :
             // Block any system command that requires the state as IDLE/ALARM. (i.e. EEPROM, homing)
-            // if ( !(sys.state == STATE_IDLE || sys.state == STATE_ALARM) ) { return(STATUS_IDLE_ERROR); }
+            if ( !(sys.state == STATE_IDLE || sys.state == STATE_ALARM) ) { return(STATUS_IDLE_ERROR); }
             switch( cmdString[char_counter] ) {
           //     case '#' : // Print Grbl NGC parameters
           //       if ( line[++char_counter] != 0 ) { return(STATUS_INVALID_STATEMENT); }
