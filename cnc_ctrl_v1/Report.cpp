@@ -56,6 +56,8 @@ void  reportStatusMessage(byte status_code){
             Serial.println(F("Not idle")); break;
           case STATUS_ALARM_LOCK:
             Serial.println(F("Alarm lock, $X to unlock")); break;
+          case STATUS_CRITICAL_LOCK:
+            Serial.println(F("Critical lock, fix settings or recalibrate chains to unlock")); break;
           // case STATUS_SOFT_LIMIT_ERROR:
           // Serial.println(F("Homing not enabled")); break;
           // case STATUS_OVERFLOW:
@@ -125,6 +127,8 @@ void  reportAlarmMessage(byte alarm_code) {
     switch (alarm_code) {
       case EXEC_ALARM_POSITION_LOST:
         Serial.println(F("Position Lost, check settings or recalibrate chain lengths")); break;
+      case EXEC_ALARM_SOFT_LIMIT:
+        Serial.println(F("Sled is outside the bounds of the limits, use jogging to return and $x to unlock.")); break;
     }
   #endif
 }
@@ -235,8 +239,25 @@ void  returnPoz(){
     
     if (millis() - lastRan > POSITIONTIMEOUT){
         
-        
-        Serial.print(F("<Idle,MPos:"));
+        Serial.print(F("<"));
+        switch (sys.state) {
+          case STATE_IDLE: Serial.print(F("Idle")); break;
+          case STATE_CYCLE: Serial.print(F("Run")); break;
+          // case STATE_HOLD:
+          //   if (!(sys.suspend & SUSPEND_JOG_CANCEL)) {
+          //     Serial.print(F("Hold:"));
+          //     if (sys.suspend & SUSPEND_HOLD_COMPLETE) { serial_write('0'); } // Ready to resume
+          //     else { serial_write('1'); } // Actively holding
+          //     break;
+          //   } // Continues to print jog state during jog cancel.
+          // case STATE_JOG: Serial.print(F("Jog")); break;
+          // case STATE_HOMING: Serial.print(F("Home")); break;
+          case STATE_ALARM: Serial.print(F("Alarm")); break;
+          // case STATE_CHECK_MODE: Serial.print(F("Check")); break;
+          case STATE_CRITICAL: Serial.print(F("Critical")); break;
+          // case STATE_SLEEP: Serial.print(F("Sleep")); break;
+        }
+        Serial.print(F(",MPos:"));
         Serial.print(sys.xPosition/sys.inchesToMMConversion);
         Serial.print(F(","));
         Serial.print(sys.yPosition/sys.inchesToMMConversion);

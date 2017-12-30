@@ -38,7 +38,7 @@ Copyright 2014-2017 Bar Smith*/
 #define STATE_OLD_SETTINGS  bit(2) // Locks out all g-code processes, allows settings access until old settings are loaded
 #define STATE_CYCLE         bit(3) // Cycle is running or motions are being executed.
 #define STATE_HOLD          bit(4) // Active feed hold
-#define STATE_SAFETY_DOOR   bit(5) // Safety door is ajar. Feed holds and de-energizes system.
+#define STATE_CRITICAL      bit(5) // An unrecoverable loss of position
 #define STATE_MOTION_CANCEL bit(6) // Motion cancel by feed hold and return to idle. 
 
 // Alarm executor codes. Valid values (1-255). Zero is reserved.
@@ -92,5 +92,6 @@ void  _watchDog();
 void execSystemRealtime();
 void systemSaveAxesPosition();
 byte systemExecuteCmdstring(String&);
+void systemCheckSoftLimit(const float&, const float&,const float&);
 
 #endif

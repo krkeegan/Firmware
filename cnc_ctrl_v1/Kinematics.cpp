@@ -68,6 +68,16 @@ void  Kinematics::inverse(float xTarget,float yTarget, float* aChainLength, floa
     
     */
     
+    // Check soft limit zAxis is not checked here, this could be moved 
+    // to motion.  Not clear why this is here.
+    systemCheckSoftLimit(xTarget, yTarget, 0);
+    // TODO, the problem here is we hope this catches before we move out of the 
+    // allowable workspace, but inertia may get us there before the machine 
+    // actually stops. This may require some rethinking.  If we end up outside
+    // the soft limit, then we likely won't be able to move back in.
+    execSystemRealtime();
+    if(sys.stop){return;}
+    
     if(sysSettings.kinematicsType == 1){
         quadrilateralInverse(xTarget, yTarget, aChainLength, bChainLength);
     }
@@ -78,9 +88,6 @@ void  Kinematics::inverse(float xTarget,float yTarget, float* aChainLength, floa
 }
 
 void  Kinematics::quadrilateralInverse(float xTarget,float yTarget, float* aChainLength, float* bChainLength){
-
-    //Confirm that the coordinates are on the wood
-    _verifyValidTarget(&xTarget, &yTarget);
 
     //coordinate shift to put (0,0) in the center of the plywood from the left sprocket
     y = (halfHeight) + sysSettings.motorOffsetY  - yTarget;
@@ -197,9 +204,6 @@ void  Kinematics::triangularInverse(float xTarget,float yTarget, float* aChainLe
     
     */
     
-    //Confirm that the coordinates are on the wood
-    _verifyValidTarget(&xTarget, &yTarget);
-    
     //Calculate motor axes length to the bit
     float Motor1Distance = sqrt(pow((-1*_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
     float Motor2Distance = sqrt(pow((_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
@@ -266,12 +270,17 @@ void  Kinematics::forward(const float& chainALength, const float& chainBLength, 
                 *yPos = 0;
             }
             else{
+                if (sys.state == STATE_CRITICAL){
+                  // We know where we are now.
+                  sys.state = STATE_IDLE;
+                }
                 Serial.println("position loaded at:");
                 Serial.println(xGuess);
                 Serial.println(yGuess);
                 *xPos = xGuess;
                 *yPos = yGuess;
             }
+            systemCheckSoftLimit(*xPos,*yPos,0);
             break;
         }
     }

@@ -162,7 +162,6 @@ int getPCBVersion(){
 
 // This should likely go away and be handled by setting the pause flag and then
 // pausing in the execSystemRealtime function
-// Need to check if all returns from this subsequently look to sys.stop
 void pause(){
     /*
     
@@ -216,18 +215,33 @@ void execSystemRealtime(){
     motionDetachIfIdle();
     // Check for Alarms
     if (sys.alarm){
-      // Hard Alarms 
-      // These could lock up the system in a loop here and force a full restart 
-      // of the Arduino.  Grbl uses this when it wants to force the machine 
-      // back into a know state.  Since we don't have a homing cycle, I don't
-      // think we have a need for these yet.
-      
-      // Soft Alarms
-      // 1) Report the alarm, 2) put the machine in an STATE_ALARM preventing
-      // actions other than $ commands from running.
+      // Abort whatever we are doing, at some point, it would be better if only 
+      // critical alarms did this.  All others should be able to gracefully 
+      // stop and hold where they are.
+      sys.stop = true;
       reportAlarmMessage(sys.alarm);
+      if (sys.alarm == EXEC_ALARM_POSITION_LOST){
+        // Critical Alarms - Irrecoverable error which requires a change in settings
+        // or a chain recalibration
+        sys.state = STATE_CRITICAL;
+      }
+      else {
+        // Major Alarms
+        // 1) Report the alarm, 2) put the machine in an STATE_ALARM preventing
+        // actions other than $ commands from running. 3) we would like to 
+        // gracefully slow down the machine but we don't ahve the ability yet
+        reportAlarmMessage(sys.alarm);
+        sys.state = STATE_ALARM;
+      }
       sys.alarm = 0;  // clear the alarm flag
-      sys.state = STATE_ALARM;
+    }
+    
+    // Check for Pause states
+    if (sys.pause){
+      sys.state = STATE_HOLD;
+    } 
+    else if (sys.state == STATE_HOLD){
+      sys.state= STATE_IDLE;
     }
 }
 
@@ -282,6 +296,22 @@ void systemReset(){
     setup();
 }
 
+void systemCheckSoftLimit(const float& xPos, const float& yPos, const float& zPos){
+  /*
+  Checks whether the passed coordinates are within the allowable operating
+  ranges.  XY operating range is the machineWidth/Height
+  Z is currently not limited, but will likely need user defined limits.
+  */
+  if ((xPos < -kinematics.halfWidth) || (xPos > kinematics.halfWidth)){
+    sys.alarm = EXEC_ALARM_SOFT_LIMIT;
+    return;
+  }
+  if ((yPos < -kinematics.halfHeight) || (yPos > kinematics.halfHeight)){
+    sys.alarm = EXEC_ALARM_SOFT_LIMIT;
+    return;
+  };
+}
+
 byte systemExecuteCmdstring(String& cmdString){
     /*
     This function processes the $ system commands
@@ -305,7 +335,7 @@ byte systemExecuteCmdstring(String& cmdString){
                   reportMaslowSettings();
                 // }
                 break;
-              case 'K' : // forces kinematics update
+              case 'K' : // forces kinematics update removes Critcal Lock if successful
                 kinematics.recomputeGeometry();
                 kinematics.forward(leftAxis.read(), rightAxis.read(), &sys.xPosition, &sys.yPosition);
                 break;
@@ -350,7 +380,7 @@ byte systemExecuteCmdstring(String& cmdString){
               //break;
           default :
             // Block any system command that requires the state as IDLE/ALARM. (i.e. EEPROM, homing)
-            if ( !(sys.state == STATE_IDLE || sys.state == STATE_ALARM) ) { return(STATUS_IDLE_ERROR); }
+            if ( !(sys.state == STATE_IDLE || sys.state == STATE_ALARM || sys.state == STATE_CRITICAL) ) { return(STATUS_IDLE_ERROR); }
             switch( cmdString[char_counter] ) {
           //     case '#' : // Print Grbl NGC parameters
           //       if ( line[++char_counter] != 0 ) { return(STATUS_INVALID_STATEMENT); }

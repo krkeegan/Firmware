@@ -517,6 +517,9 @@ byte  interpretCommandString(String& cmdString){
             // Maslow '$' system command
             return(systemExecuteCmdstring(cmdString));
         }
+        else if (sys.state == STATE_CRITICAL){
+          return STATUS_CRITICAL_LOCK;
+        }
         else if (cmdString[0] == 'B'){                   //If the command is a B command
             #if defined (verboseDebug) && verboseDebug > 0
             Serial.print(F("iCS executing B code line: "));
