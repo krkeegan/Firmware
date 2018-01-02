@@ -432,6 +432,38 @@ byte systemExecuteCmdstring(String& cmdString){
                 reportFeedbackMessage(MESSAGE_RESTORE_DEFAULTS);
                 systemReset(); // Force reset to ensure settings are initialized correctly.
                 break;
+              case 'M' : // Maslow Specific Commands
+                if (cmdString[++char_counter] != 'S') { return(STATUS_INVALID_STATEMENT); }
+                if (cmdString[++char_counter] != 'L') { return(STATUS_INVALID_STATEMENT); }
+                if (cmdString[++char_counter] != 'W') { return(STATUS_INVALID_STATEMENT); }
+                switch (cmdString[++char_counter]) {
+                  case '5': //Set encoder position
+                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    char_counter++;
+                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                    leftAxis.set(value);
+                    break;
+                  case '6': 
+                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    char_counter++;
+                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                    rightAxis.set(value);
+                    break;
+                  case '7': // Move axis relative distance
+                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    char_counter++;
+                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                    singleAxisMove(&leftAxis,  leftAxis.read()  + value, sysSettings.maxFeed * .8);
+                    break;
+                  case '8': 
+                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    char_counter++;
+                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                    singleAxisMove(&rightAxis,  rightAxis.read()  + value, sysSettings.maxFeed * .8);
+                    break;
+                  default: return(STATUS_INVALID_STATEMENT);
+                }
+                break;
           //     case 'N' : // Startup lines. [IDLE/ALARM]
           //       if ( line[++char_counter] == 0 ) { // Print startup lines
           //         for (helper_var=0; helper_var < N_STARTUP_LINE; helper_var++) {

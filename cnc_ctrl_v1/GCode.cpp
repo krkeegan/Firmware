@@ -151,24 +151,6 @@ byte  executeBcodeLine(const String& gcodeLine){
         return STATUS_OK;
     }
     
-    if(gcodeLine.substring(0, 3) == "B06"){
-        Serial.println(F("Setting Chain Lengths To: "));
-        float newL = extractGcodeValue(gcodeLine, 'L', 0);
-        float newR = extractGcodeValue(gcodeLine, 'R', 0);
-        
-        leftAxis.set(newL);
-        rightAxis.set(newR);
-        
-        Serial.print(F("Left: "));
-        Serial.print(leftAxis.read());
-        Serial.println(F("mm"));
-        Serial.print(F("Right: "));
-        Serial.print(rightAxis.read());
-        Serial.println(F("mm"));
-        
-        return STATUS_OK;
-    }
-    
     if(gcodeLine.substring(0, 3) == "B08"){
         //Manually recalibrate chain lengths
         leftAxis.set(sysSettings.originalChainLength);
@@ -184,28 +166,6 @@ byte  executeBcodeLine(const String& gcodeLine){
         kinematics.forward(leftAxis.read(), rightAxis.read(), &sys.xPosition, &sys.yPosition);
         
         Serial.println(F("Message: The machine chains have been manually re-calibrated."));
-        
-        return STATUS_OK;
-    }
-    
-    if(gcodeLine.substring(0, 3) == "B09"){
-        //Directly command each axis to move to a given distance
-        float lDist = extractGcodeValue(gcodeLine, 'L', 0);
-        float rDist = extractGcodeValue(gcodeLine, 'R', 0);
-        float speed = extractGcodeValue(gcodeLine, 'F', 800);
-        
-        if(sys.useRelativeUnits){
-            if(abs(lDist) > 0){
-                singleAxisMove(&leftAxis,  leftAxis.read()  + lDist, speed);
-            }
-            if(abs(rDist) > 0){
-                singleAxisMove(&rightAxis, rightAxis.read() + rDist, speed);
-            }
-        }
-        else{
-            singleAxisMove(&leftAxis,  lDist, speed);
-            singleAxisMove(&rightAxis, rDist, speed);
-        }
         
         return STATUS_OK;
     }

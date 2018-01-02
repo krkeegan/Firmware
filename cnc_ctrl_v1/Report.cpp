@@ -111,7 +111,7 @@ void reportFeedbackMessage(byte message_code){
       Serial.print(F("Unable to find valid machine position for chain lengths"));
       Serial.print(leftAxis.read());
       Serial.print(", ");
-      Serial.print(leftAxis.read());
+      Serial.print(rightAxis.read());
       Serial.println(F(" . Please calibrate chain lengths or check settings."));
       break;
   }
