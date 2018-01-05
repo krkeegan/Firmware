@@ -141,6 +141,15 @@ int   coordinatedMove(const float& xEnd, const float& yEnd, const float& zEnd, f
             sys.yPosition +=  yStepSize;
             zPosition += zStepSize;
             
+            // Check soft limit
+            systemCheckSoftLimit(sys.xPosition, sys.yPosition, zPosition);
+            // TODO, the problem here is we hope this catches before we move out of the 
+            // allowable workspace, but inertia may get us there before the machine 
+            // actually stops. This may require some rethinking.  If we end up outside
+            // the soft limit, then we likely won't be able to move back in.
+            execSystemRealtime();
+            if(sys.stop){return;}
+            
             //find the chain lengths for this step
             // This section ~180us
             kinematics.inverse(sys.xPosition,sys.yPosition,&aChainLength,&bChainLength);
@@ -157,10 +166,6 @@ int   coordinatedMove(const float& xEnd, const float& yEnd, const float& zEnd, f
             
             //increment the number of steps taken
             numberOfStepsTaken++;
-            
-            // Run realtime commands
-            execSystemRealtime();
-            if (sys.stop){return 1;}
         }
     }
     #if misloopDebug > 0
@@ -300,16 +305,21 @@ int   arc(const float& X1, const float& Y1, const float& X2, const float& Y2, co
             sys.xPosition = radius * cos(angleNow) + centerX;
             sys.yPosition = radius * sin(angleNow) + centerY;
             
+            // Check soft limit
+            systemCheckSoftLimit(sys.xPosition, sys.yPosition, 0);
+            // TODO, the problem here is we hope this catches before we move out of the 
+            // allowable workspace, but inertia may get us there before the machine 
+            // actually stops. This may require some rethinking.  If we end up outside
+            // the soft limit, then we likely won't be able to move back in.
+            execSystemRealtime();
+            if(sys.stop){return;}
+            
             kinematics.inverse(sys.xPosition,sys.yPosition,&aChainLength,&bChainLength);
             
             leftAxis.write(aChainLength);
             rightAxis.write(bChainLength); 
             movementUpdate();
             
-            // Run realtime commands
-            execSystemRealtime();
-            if (sys.stop){return 1;}
-
             numberOfStepsTaken++;
         }
     }

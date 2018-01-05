@@ -326,7 +326,7 @@ byte systemExecuteCmdstring(String& cmdString){
     }
     else {
         switch( cmdString[char_counter] ) {
-          case '$': case 'K':// case 'G': case 'C': case 'X':
+          case '$': case 'K': case 'X':// case 'G': case 'C':
             if ( cmdString.length() > 2 ) { return(STATUS_INVALID_STATEMENT); }
             switch( cmdString[char_counter] ) {
               case '$' : // Prints Maslow settings

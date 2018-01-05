@@ -68,16 +68,6 @@ void  Kinematics::inverse(float xTarget,float yTarget, float* aChainLength, floa
     
     */
     
-    // Check soft limit zAxis is not checked here, this could be moved 
-    // to motion.  Not clear why this is here.
-    systemCheckSoftLimit(xTarget, yTarget, 0);
-    // TODO, the problem here is we hope this catches before we move out of the 
-    // allowable workspace, but inertia may get us there before the machine 
-    // actually stops. This may require some rethinking.  If we end up outside
-    // the soft limit, then we likely won't be able to move back in.
-    execSystemRealtime();
-    if(sys.stop){return;}
-    
     if(sysSettings.kinematicsType == 1){
         quadrilateralInverse(xTarget, yTarget, aChainLength, bChainLength);
     }
