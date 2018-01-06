@@ -198,6 +198,7 @@ int    Axis::detach(){
 
 int    Axis::attach(){
      motorGearboxEncoder.motor.attach();
+     _timeLastMoved = millis();
      return 1;
 }
 
