@@ -37,6 +37,7 @@ void setup(){
     sys.inchesToMMConversion = 1;
     setupAxes();
     settingsInit();
+    kinematics.init();
 
     readyCommandString.reserve(INCBUFFERLENGTH);           //Allocate memory so that this string doesn't fragment the heap as it grows and shrinks
     gcodeLine.reserve(INCBUFFERLENGTH);
@@ -67,7 +68,6 @@ void loop(){
         setSpindlePower(false);  // this restriction for safety if we are 
     }                            // comfortable that USB disconnects are
                                  // not a common occurence anymore
-    kinematics.init();
     
     // Let's go!
     reportStatusMessage(STATUS_OK);
