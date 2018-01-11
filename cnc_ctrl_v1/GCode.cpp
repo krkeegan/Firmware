@@ -141,11 +141,6 @@ byte  executeBcodeLine(const String& gcodeLine){
         return STATUS_OK;
     }
     
-    if(gcodeLine.substring(0, 3) == "B02"){
-        calibrateChainLengths(gcodeLine);
-        return STATUS_OK;
-    }
-    
     if(gcodeLine.substring(0, 3) == "B04"){
         //Test each of the axis
         maslowDelay(500);
@@ -158,33 +153,6 @@ byte  executeBcodeLine(const String& gcodeLine){
         if(sys.stop){return STATUS_OK;}
         zAxis.test();
         Serial.println(F("Tests complete."));
-        return STATUS_OK;
-    }
-    
-    if(gcodeLine.substring(0, 3) == "B08"){
-        //Manually recalibrate chain lengths
-        leftAxis.set(sysSettings.originalChainLength);
-        rightAxis.set(sysSettings.originalChainLength);
-        
-        Serial.print(F("Left: "));
-        Serial.print(leftAxis.read());
-        Serial.println(F("mm"));
-        Serial.print(F("Right: "));
-        Serial.print(rightAxis.read());
-        Serial.println(F("mm"));
-        
-        kinematics.forward(leftAxis.read(), rightAxis.read(), &sys.xPosition, &sys.yPosition);
-        
-        Serial.println(F("Message: The machine chains have been manually re-calibrated."));
-        
-        return STATUS_OK;
-    }
-    
-    if(gcodeLine.substring(0, 3) == "B10"){
-        //measure the left axis chain length
-        Serial.print(F("[Measure: "));
-        Serial.print(leftAxis.read());
-        Serial.println(F("]"));
         return STATUS_OK;
     }
     
@@ -254,25 +222,6 @@ byte  executeBcodeLine(const String& gcodeLine){
         if (left > 0) axis = &leftAxis;
         if (useZ > 0) axis = &zAxis;
         voltageTest(axis, start, stop);
-        return STATUS_OK;
-    }
-    
-    if(gcodeLine.substring(0, 3) == "B15"){
-        //The B15 command moves the chains to the length which will put the sled in the center of the sheet
-        
-        //Compute chain length for position 0,0
-        float chainLengthAtMiddle;
-        kinematics.inverse(0,0,&chainLengthAtMiddle,&chainLengthAtMiddle);
-        
-        //Adjust left chain length
-        singleAxisMove(&leftAxis,  chainLengthAtMiddle, 800);
-        
-        //Adjust right chain length
-        singleAxisMove(&rightAxis, chainLengthAtMiddle, 800);
-        
-        //Reload the position
-        kinematics.forward(leftAxis.read(), rightAxis.read(), &sys.xPosition, &sys.yPosition);
-        
         return STATUS_OK;
     }
 }

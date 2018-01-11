@@ -19,35 +19,6 @@ Copyright 2014-2017 Bar Smith*/
 
 #include "Maslow.h"
 
-void  calibrateChainLengths(String gcodeLine){
-    /*
-    The calibrateChainLengths function lets the machine know that the chains are set to a given length where each chain is ORIGINCHAINLEN
-    in length
-    */
-    
-    if (extractGcodeValue(gcodeLine, 'L', 0)){
-        //measure out the left chain
-        Serial.println(F("Measuring out left chain"));
-        singleAxisMove(&leftAxis, sysSettings.originalChainLength, (sysSettings.maxFeed * .9));
-        
-        Serial.print(leftAxis.read());
-        Serial.println(F("mm"));
-        
-        leftAxis.detach();
-    }
-    else if(extractGcodeValue(gcodeLine, 'R', 0)){
-        //measure out the right chain
-        Serial.println(F("Measuring out right chain"));
-        singleAxisMove(&rightAxis, sysSettings.originalChainLength, (sysSettings.maxFeed * .9));
-        
-        Serial.print(rightAxis.read());
-        Serial.println(F("mm"));
-        
-        rightAxis.detach();
-    }
-    
-}
-
 void   setupAxes(){
     /*
     
@@ -437,30 +408,58 @@ byte systemExecuteCmdstring(String& cmdString){
                 if (cmdString[++char_counter] != 'S') { return(STATUS_INVALID_STATEMENT); }
                 if (cmdString[++char_counter] != 'L') { return(STATUS_INVALID_STATEMENT); }
                 if (cmdString[++char_counter] != 'W') { return(STATUS_INVALID_STATEMENT); }
-                switch (cmdString[++char_counter]) {
-                  case '5': //Set encoder position
-                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
-                    char_counter++;
-                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                if(!readFloat(cmdString, ++char_counter, parameter)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                switch ((byte)parameter) {
+                  case 4: //Set encoder position Left
+                    if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
                     leftAxis.set(value);
                     break;
-                  case '6': 
-                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
-                    char_counter++;
-                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                  case 5: // Right
+                    if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
                     rightAxis.set(value);
                     break;
-                  case '7': // Move axis relative distance
-                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
-                    char_counter++;
-                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                  case 6: // Move axis relative distance Left 
+                    if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
                     singleAxisMove(&leftAxis,  leftAxis.read()  + value, sysSettings.maxFeed * .8);
                     break;
-                  case '8': 
-                    if (cmdString[++char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
-                    char_counter++;
-                    if(!readFloat(cmdString, char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                  case 7: // right
+                    if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
+                    if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
                     singleAxisMove(&rightAxis,  rightAxis.read()  + value, sysSettings.maxFeed * .8);
+                    break;
+                  case 8: // Move axis absolute distance Left or read if no value
+                    if (cmdString[char_counter] != '=') { 
+                      Serial.print(F("[Measure: "));
+                      Serial.print(leftAxis.read());
+                      Serial.println(F("]"));
+                    }
+                    else {
+                      if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                      singleAxisMove(&leftAxis,  value, sysSettings.maxFeed * .8);
+                    }
+                    break;
+                  case 9: // right
+                    if (cmdString[char_counter] != '=') { 
+                      Serial.print(F("[Measure: "));
+                      Serial.print(rightAxis.read());
+                      Serial.println(F("]"));
+                    }
+                    else {
+                      if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
+                      singleAxisMove(&rightAxis,  value, sysSettings.maxFeed * .8);
+                    }
+                    break;
+                  case 10: //Move Chains to Center can't use G1 cmd, because 
+                           //initial chain length may result in an unachievable
+                           //position for the sled, this is an odd function, but 
+                           // it seems to be necessary
+                    float chainLengthAtMiddle;
+                    kinematics.inverse(0,0,&chainLengthAtMiddle,&chainLengthAtMiddle);
+                    singleAxisMove(&leftAxis,  chainLengthAtMiddle, sysSettings.maxFeed * .8);
+                    singleAxisMove(&rightAxis, chainLengthAtMiddle, sysSettings.maxFeed * .8);
                     break;
                   default: return(STATUS_INVALID_STATEMENT);
                 }
