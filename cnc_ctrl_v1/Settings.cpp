@@ -90,7 +90,7 @@ void settingsReset() {
     sysSettings.KiPos = 0.0;    // float KiPos;
     sysSettings.KdPos = 34.0;   // float KdPos;
     sysSettings.propWeightPos = 1.0;    // float propWeightPos;
-    sysSettings.KpV = 7.0;    // float KpV;
+    sysSettings.KpV = 5.0;    // float KpV;
     sysSettings.KiV = 0.0;    // float KiV;
     sysSettings.KdV = 0.28;   // float KdV;
     sysSettings.propWeightV = 1.0;    // float propWeightV;
@@ -98,10 +98,11 @@ void settingsReset() {
     sysSettings.zKiPos = 0.0;    // float zKiPos;
     sysSettings.zKdPos = 34.0;   // float zKdPos;
     sysSettings.zPropWeightPos = 1.0;    // float zPropWeightPos;
-    sysSettings.zKpV = 7.0;    // float zKpV;
+    sysSettings.zKpV = 5.0;    // float zKpV;
     sysSettings.zKiV = 0.0;    // float zKiV;
     sysSettings.zKdV = 0.28;   // float zKdV;
     sysSettings.zPropWeightV = 1.0;    // float zPropWeightV;
+    sysSettings.chainSagCorrection = 0.0;  // float chainSagCorrection;
     sysSettings.eepromValidData = EEPROMVALIDDATA; // byte eepromValidData;
 }
 
@@ -226,7 +227,7 @@ byte settingsStoreGlobalSetting(const byte& parameter,const float& value){
     
     // We can add whatever sanity checks we want here and error out if we like
     switch(parameter) {
-        case 0: case 1: case 2: case 3: case 4: case 5:
+        case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8:
             switch(parameter) {
                 case 0:
                       sysSettings.machineWidth = value;
@@ -246,18 +247,18 @@ byte settingsStoreGlobalSetting(const byte& parameter,const float& value){
                 case 5: 
                       sysSettings.sledHeight = value;
                       break;
+                case 6: 
+                      sysSettings.sledCG = value;
+                      break;
+                case 7: 
+                      sysSettings.kinematicsType = value;
+                      break;
+                case 8: 
+                      sysSettings.rotationDiskRadius = value;
+                      break;
             }
-            kinematics.recomputeGeometry();
+            kinematics.init();
             break;
-        case 6: 
-              sysSettings.sledCG = value;
-              break;
-        case 7: 
-              sysSettings.kinematicsType = value;
-              break;
-        case 8: 
-              sysSettings.rotationDiskRadius = value;
-              break;
         case 9: 
               sysSettings.axisDetachTime = value;
               break;
@@ -274,6 +275,7 @@ byte settingsStoreGlobalSetting(const byte& parameter,const float& value){
                   settingsLoadOldSteps();
                 }
               }
+              kinematics.init();
               break;
         case 13: 
               sysSettings.distPerRot = value;
@@ -286,6 +288,7 @@ byte settingsStoreGlobalSetting(const byte& parameter,const float& value){
                   settingsLoadOldSteps();
                 }
               }
+              kinematics.init();
               break;
         case 15: 
               sysSettings.maxFeed = value;
@@ -378,6 +381,9 @@ byte settingsStoreGlobalSetting(const byte& parameter,const float& value){
             }
             zAxis.setPIDValues(&sysSettings.zKpPos, &sysSettings.zKiPos, &sysSettings.zKdPos, &sysSettings.zPropWeightPos, &sysSettings.zKpV, &sysSettings.zKiV, &sysSettings.zKdV, &sysSettings.zPropWeightV);
             break;
+        case 37:
+              sysSettings.chainSagCorrection = value;
+              break;
         default:
               return(STATUS_INVALID_STATEMENT);
     }

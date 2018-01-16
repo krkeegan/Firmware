@@ -30,7 +30,7 @@ Kinematics::Kinematics(){
 void Kinematics::init(){
     recomputeGeometry();
     if (sys.state != STATE_OLD_SETTINGS){
-      forward(leftAxis.read(), rightAxis.read(), &sys.xPosition, &sys.yPosition);
+      forward(leftAxis.read(), rightAxis.read(), &sys.xPosition, &sys.yPosition, sys.xPosition, sys.yPosition);
     }
 }
 
@@ -48,6 +48,7 @@ void Kinematics::recomputeGeometry(){
     calling this function regenerates those values.  These are all floats so they take up
     ~32bytes of RAM to keep them in memory.
     */
+    Phi = -0.2;
     h = sqrt((sysSettings.sledWidth/2)*(sysSettings.sledWidth/2) + sysSettings.sledHeight * sysSettings.sledHeight);
     Theta = atan(2*sysSettings.sledHeight/sysSettings.sledWidth);
     Psi1 = Theta - Phi;
@@ -197,11 +198,23 @@ void  Kinematics::triangularInverse(float xTarget,float yTarget, float* aChainLe
     //Calculate motor axes length to the bit
     float Motor1Distance = sqrt(pow((-1*_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
     float Motor2Distance = sqrt(pow((_xCordOfMotor - xTarget),2)+pow((_yCordOfMotor - yTarget),2));
-    
-    //Calculate chain lengths accounting for sprocket geometry
-    float Chain1 = (R * (3.14159 - acos(R/Motor1Distance) - acos((_yCordOfMotor - yTarget)/Motor1Distance))) + sqrt(pow(Motor1Distance,2)-pow(R,2));
-    float Chain2 = (R * (3.14159 - acos(R/Motor2Distance) - acos((_yCordOfMotor - yTarget)/Motor2Distance))) + sqrt(pow(Motor2Distance,2)-pow(R,2));
-    
+
+    //Calculate the chain angles from horizontal
+    float Chain1Angle = 3.14159 - acos(R/Motor1Distance) - acos((_yCordOfMotor - yTarget)/Motor1Distance);
+    float Chain2Angle = 3.14159 - acos(R/Motor2Distance) - acos((_yCordOfMotor - yTarget)/Motor2Distance);
+
+    //Calculate the straight chain length from the sprocket to the bit
+    float Chain1Straight = sqrt(pow(Motor1Distance,2)-pow(R,2));
+    float Chain2Straight = sqrt(pow(Motor2Distance,2)-pow(R,2));
+
+    //Correct the straight chain lengths to account for chain sag
+    Chain1Straight *= (1 + ((sysSettings.chainSagCorrection / 1000000000000) * pow(cos(Chain1Angle),2) * pow(Chain1Straight,2) * pow((tan(Chain2Angle) * cos(Chain1Angle)) + sin(Chain1Angle),2)));
+    Chain2Straight *= (1 + ((sysSettings.chainSagCorrection / 1000000000000) * pow(cos(Chain2Angle),2) * pow(Chain2Straight,2) * pow((tan(Chain1Angle) * cos(Chain2Angle)) + sin(Chain2Angle),2)));
+
+    //Calculate total chain lengths accounting for sprocket geometry and chain sag
+    float Chain1 = (R * Chain1Angle) + Chain1Straight;
+    float Chain2 = (R * Chain2Angle) + Chain2Straight;
+
     //Subtract of the virtual length which is added to the chain by the rotation mechanism
     Chain1 = Chain1 - sysSettings.rotationDiskRadius;
     Chain2 = Chain2 - sysSettings.rotationDiskRadius;
@@ -210,12 +223,10 @@ void  Kinematics::triangularInverse(float xTarget,float yTarget, float* aChainLe
     *bChainLength = Chain2;
 }
 
-void  Kinematics::forward(const float& chainALength, const float& chainBLength, float* xPos, float* yPos){
+void  Kinematics::forward(const float& chainALength, const float& chainBLength, float* xPos, float* yPos, float xGuess, float yGuess){
   
     Serial.println(F("[Forward Calculating Position]"));
     
-    float xGuess = 0;
-    float yGuess = 0;
 
     float guessLengthA;
     float guessLengthB;
@@ -252,8 +263,8 @@ void  Kinematics::forward(const float& chainALength, const float& chainBLength, 
         // No need for sys.stop check here
 
         //if we've converged on the point...or it's time to give up, exit the loop
-        if((abs(aChainError) < .1 && abs(bChainError) < .1) or guessCount > KINEMATICSMAXGUESS){
-            if(guessCount > KINEMATICSMAXGUESS){
+        if((abs(aChainError) < .1 && abs(bChainError) < .1) or guessCount > KINEMATICSMAXGUESS or guessLengthA > 3360  or guessLengthB > 3360){
+            if((guessCount > KINEMATICSMAXGUESS) or guessLengthA > 3360 or guessLengthB > 3360){
                 reportFeedbackMessage(MESSAGE_CHAIN_LENGTH_ERROR);
                 sys.alarm = EXEC_ALARM_POSITION_LOST;
                 *xPos = 0;
