@@ -265,8 +265,11 @@ void  Kinematics::forward(const float& chainALength, const float& chainBLength, 
         //if we've converged on the point...or it's time to give up, exit the loop
         if((abs(aChainError) < .1 && abs(bChainError) < .1) or guessCount > KINEMATICSMAXGUESS or guessLengthA > 3360  or guessLengthB > 3360){
             if((guessCount > KINEMATICSMAXGUESS) or guessLengthA > 3360 or guessLengthB > 3360){
-                reportFeedbackMessage(MESSAGE_CHAIN_LENGTH_ERROR);
-                sys.alarm = EXEC_ALARM_POSITION_LOST;
+                if (sys.state != STATE_CRITICAL){
+                  // If already in critical state no need to report again
+                  reportFeedbackMessage(MESSAGE_CHAIN_LENGTH_ERROR);
+                  sys.alarm = EXEC_ALARM_POSITION_LOST;
+                }
                 *xPos = 0;
                 *yPos = 0;
             }

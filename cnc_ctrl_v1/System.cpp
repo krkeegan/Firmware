@@ -414,11 +414,13 @@ byte systemExecuteCmdstring(String& cmdString){
                     if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
                     if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
                     leftAxis.set(value);
+                    kinematics.init();
                     break;
                   case 5: // Right
                     if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
                     if(!readFloat(cmdString, ++char_counter, value)) { return(STATUS_BAD_NUMBER_FORMAT); }
                     rightAxis.set(value);
+                    kinematics.init();
                     break;
                   case 6: // Move axis relative distance Left 
                     if (cmdString[char_counter] != '=') { return(STATUS_INVALID_STATEMENT); }
