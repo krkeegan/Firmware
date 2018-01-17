@@ -133,14 +133,7 @@ byte  executeBcodeLine(const String& gcodeLine){
     if(sys.state == STATE_OLD_SETTINGS){
       return STATUS_OLD_SETTINGS;
     }
-    
-    if(gcodeLine.substring(0, 3) == "B01"){
-        
-        Serial.println(F("Motor Calibration Not Needed"));
-        
-        return STATUS_OK;
-    }
-    
+      
     if(gcodeLine.substring(0, 3) == "B04"){
         //Test each of the axis
         maslowDelay(500);
