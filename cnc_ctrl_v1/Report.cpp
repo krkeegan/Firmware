@@ -105,6 +105,8 @@ void reportFeedbackMessage(byte message_code){
     //   Serial.print(F("Restoring spindle")); break;
     // case MESSAGE_SLEEP_MODE:
     //   Serial.print(F("Sleeping")); break;
+    case STEPS_MOVING_ON_LOAD:
+      Serial.print(F("Improper shutdown detected, exact position may have been lost, recalibration may be necessary")); break;
   }
   Serial.println(F(" "));
 }

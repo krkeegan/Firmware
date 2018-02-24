@@ -145,10 +145,11 @@ void settingsSaveStepstoEEprom(){
     */
     // don't run if old position data has not been incorporated yet
     if (!sys.oldSettingsFlag){
-      settingsStepsV1_t sysSteps = {
+      settingsStepsV2_t sysSteps = {
         leftAxis.steps(),
         rightAxis.steps(),
         zAxis.steps(),
+        sys.isMoving,
         EEPROMVALIDDATA
       };
       EEPROM.put(310, sysSteps);
@@ -163,7 +164,7 @@ void settingsLoadStepsFromEEprom(){
     axes in the future.
     */
     settingsStepsV1_t tempStepsV1;
-    settingsVersion_t settingsVersionStruct;
+    settingsStepsV2_t tempStepsV2;
     
     EEPROM.get(310, tempStepsV1);
     if (tempStepsV1.eepromValidData == EEPROMVALIDDATA){
@@ -171,21 +172,32 @@ void settingsLoadStepsFromEEprom(){
             rightAxis.setSteps(tempStepsV1.rSteps);
             zAxis.setSteps(tempStepsV1.zSteps);
     }
-    else if (EEPROM.read(5) == EEPROMVALIDDATA &&
-        EEPROM.read(105) == EEPROMVALIDDATA &&
-        EEPROM.read(205) == EEPROMVALIDDATA){
-        bit_true(sys.oldSettingsFlag, NEED_ENCODER_STEPS);
-        bit_true(sys.oldSettingsFlag, NEED_DIST_PER_ROT);
-        bit_true(sys.oldSettingsFlag, NEED_Z_ENCODER_STEPS);
-        bit_true(sys.oldSettingsFlag, NEED_Z_DIST_PER_ROT);
-        sys.state = STATE_OLD_SETTINGS;
-        Serial.println(F("Old position data detected."));
-        Serial.println(F("Please set $12, $13, $19, and $20 to load position."));
-    }
     else {
-        systemRtExecAlarm |= ALARM_POSITION_LOST;  // if this same global is touched by ISR then need to make atomic somehow
-                                                   // also need to consider if need difference between flag with bits and
-                                                   // error message as a byte.
+      EEPROM.get(310, tempStepsV2);
+      if (tempStepsV2.eepromValidData == EEPROMVALIDDATA){
+        if (tempStepsV2.isMoving){
+          reportFeedbackMessage(STEPS_MOVING_ON_LOAD);
+        }
+        leftAxis.setSteps(tempStepsV2.lSteps);
+        rightAxis.setSteps(tempStepsV2.rSteps);
+        zAxis.setSteps(tempStepsV2.zSteps);
+      }
+      else if (EEPROM.read(5) == EEPROMVALIDDATA &&
+          EEPROM.read(105) == EEPROMVALIDDATA &&
+          EEPROM.read(205) == EEPROMVALIDDATA){
+          bit_true(sys.oldSettingsFlag, NEED_ENCODER_STEPS);
+          bit_true(sys.oldSettingsFlag, NEED_DIST_PER_ROT);
+          bit_true(sys.oldSettingsFlag, NEED_Z_ENCODER_STEPS);
+          bit_true(sys.oldSettingsFlag, NEED_Z_DIST_PER_ROT);
+          sys.state = STATE_OLD_SETTINGS;
+          Serial.println(F("Old position data detected."));
+          Serial.println(F("Please set $12, $13, $19, and $20 to load position."));
+      }
+      else {
+          systemRtExecAlarm |= ALARM_POSITION_LOST;  // if this same global is touched by ISR then need to make atomic somehow
+                                                     // also need to consider if need difference between flag with bits and
+                                                     // error message as a byte.
+      }
     }
 }
 

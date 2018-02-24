@@ -320,8 +320,16 @@ void execSystemRealtime(){
 void systemSaveAxesPosition(){
     /*
     Save steps of axes to EEPROM if they are all detached
+    
+    If the machine switched from not-moving to moving, then save bit in eeprom
+    so that we can check for potential position loss
     */
     if (!leftAxis.attached() && !rightAxis.attached() && !zAxis.attached()){
+        sys.isMoving = false;
+        settingsSaveStepstoEEprom();
+    }
+    else if (!sys.isMoving){
+        sys.isMoving = true;
         settingsSaveStepstoEEprom();
     }
 }

@@ -71,6 +71,7 @@ Copyright 2014-2017 Bar Smith*/
 #define MESSAGE_RESTORE_DEFAULTS 9
 #define MESSAGE_SPINDLE_RESTORE 10
 #define MESSAGE_SLEEP_MODE 11
+#define STEPS_MOVING_ON_LOAD 12
 
 void  reportStatusMessage(byte);
 void  reportFeedbackMessage(byte);

@@ -66,6 +66,7 @@ typedef struct {
   // THE FOLLOWING IS USED FOR IMPORTING SETTINGS FROM FIRMWARE v1.00 AND EARLIER 
   // It can be deleted at some point
   byte oldSettingsFlag;
+  bool isMoving;              //True if the machine is moving, used to catch potential position loss
 } system_t;
 extern system_t sys;
 extern Axis leftAxis;
@@ -83,6 +84,7 @@ void maslowDelay(unsigned long);
 void  _watchDog();
 void execSystemRealtime();
 void systemSaveAxesPosition();
+void systemMarkAsMoving();
 void systemReset();
 byte systemExecuteCmdstring(String&);
 void setPWMPrescalers(int prescalerChoice);
