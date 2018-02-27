@@ -131,9 +131,11 @@ void settingsSaveToEEprom(){
     
     Settings are stored starting at address 340 all the way up.
     */
-    settingsVersion_t settingsVersionStruct = {SETTINGSVERSION, EEPROMVALIDDATA};
-    EEPROM.put(300, settingsVersionStruct);
-    EEPROM.put(340, sysSettings);
+    if (sys.eepromWriteReady){
+      settingsVersion_t settingsVersionStruct = {SETTINGSVERSION, EEPROMVALIDDATA};
+      EEPROM.put(300, settingsVersionStruct);
+      EEPROM.put(340, sysSettings);
+    }
 }
 
 void settingsSaveStepstoEEprom(){
@@ -144,7 +146,7 @@ void settingsSaveStepstoEEprom(){
     axes in the future.
     */
     // don't run if old position data has not been incorporated yet
-    if (!sys.oldSettingsFlag){
+    if (!sys.oldSettingsFlag && sys.eepromWriteReady){
       settingsStepsV2_t sysSteps = {
         leftAxis.steps(),
         rightAxis.steps(),

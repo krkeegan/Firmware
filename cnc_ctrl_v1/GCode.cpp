@@ -42,6 +42,7 @@ void readSerialCommands(){
     static bool quickCommandFlag = false;
     
     if (Serial.available() > 0) {
+        sys.eepromWriteReady = true;  // Enables writing to eeprom.
         while (Serial.available() > 0) {
             char c = Serial.read();
             if (c == '!'){

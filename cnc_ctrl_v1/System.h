@@ -67,6 +67,9 @@ typedef struct {
   // It can be deleted at some point
   byte oldSettingsFlag;
   bool isMoving;              //True if the machine is moving, used to catch potential position loss
+  bool eepromWriteReady;      //Do not allow writing to EEPROM until a serial cmd 
+                              //is received.  In theory, this prevents the arduino 
+                              //from running through the loops  
 } system_t;
 extern system_t sys;
 extern Axis leftAxis;

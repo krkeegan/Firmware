@@ -38,6 +38,7 @@ void setup(){
     Serial.print(getPCBVersion());
     Serial.println(F(" Detected"));
     sys.inchesToMMConversion = 1;
+    sys.eepromWriteReady = false;  // Disable writing to EEPROM until receive serial commands
     settingsLoadFromEEprom();
     setupAxes();
     settingsLoadStepsFromEEprom();
